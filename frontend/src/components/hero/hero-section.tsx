@@ -54,35 +54,45 @@ export default function HeroSection() {
             id="hero-icon"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.70, delay: 0.2, ease }}
-            className="w-[72px] h-[72px] rounded-3xl flex items-center justify-center mb-8"
-            style={{
-              background: "linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)",
-              boxShadow: "0 8px 32px rgba(99,102,241,0.35), 0 2px 8px rgba(0,0,0,0.12)",
-            }}
+            transition={{ duration: 0.45, delay: 0, ease }}
+            className="relative w-[100px] h-[100px] flex items-center justify-center mb-8 group"
           >
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 16L20 24L12 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M24 32H36" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
+            {/* Ambient glow that blends with the plasma background */}
+            <div className="absolute inset-0 bg-white dark:bg-white/5 rounded-[2.5rem] blur-2xl opacity-40 dark:opacity-10 scale-110" />
+            
+            <div className="relative w-[88px] h-[88px] rounded-3xl flex items-center justify-center overflow-hidden
+              bg-white dark:bg-white/95
+              shadow-[0_8px_30px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)]
+              dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_20_40px_rgba(0,0,0,0.4)]"
+              style={{
+                maskImage: "radial-gradient(circle at center, black 55%, transparent 100%)",
+                WebkitMaskImage: "radial-gradient(circle at center, black 55%, transparent 100%)",
+              }}
+            >
+              <img
+                src="/vision-logo.png"
+                alt="VISION logo"
+                className="w-[72px] h-[72px] object-contain mix-blend-multiply"
+              />
+            </div>
           </motion.div>
 
           <motion.h1
             id="hero-title"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.35, ease }}
+            transition={{ duration: 0.45, delay: 0.07, ease }}
             className="font-extrabold tracking-[-0.04em] leading-none mb-5 text-[var(--foreground)]"
-            style={{ fontSize: "clamp(3.5rem, 8vw, 5.5rem)" }}
+            style={{ fontSize: "clamp(3.5rem, 8vw, 5.5rem)", fontFamily: 'var(--font-vision)', letterSpacing: '0.02em' }}
           >
-            Vision AI
+            VISION
           </motion.h1>
 
           <motion.p
             id="hero-subtitle"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, delay: 0.5, ease }}
+            transition={{ duration: 0.45, delay: 0.14, ease }}
             className="text-[1.2rem] font-normal text-[var(--muted-foreground)] leading-[1.6] max-w-[520px] mb-8"
           >
             A cognitive learning agent that helps you learn and grow with AI — personalised to you.
@@ -92,7 +102,7 @@ export default function HeroSection() {
             id="hero-actions"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.6, ease }}
+            transition={{ duration: 0.40, delay: 0.18, ease }}
           >
             <button
               id="get-started-btn"
@@ -109,7 +119,7 @@ export default function HeroSection() {
           id="hero-mockup"
           initial={{ opacity: 0, y: 48 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.7, ease }}
+          transition={{ duration: 0.55, delay: 0.22, ease }}
           className="relative z-[3] w-full max-w-[820px] mt-14 px-6"
         >
           <div

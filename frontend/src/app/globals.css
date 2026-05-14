@@ -1,3 +1,6 @@
+@import url('https://db.onlinewebfonts.com/c/24f794e098a54d68840e532a2a0c644c?family=TheSeasons-Regular');
+@import url('https://db.onlinewebfonts.com/c/5256565f479a4a7f6f9661414441584c?family=TheSeasons-Bold');
+@import url('https://db.onlinewebfonts.com/c/52d8e17088b779a5270275824c089c89?family=29LT+Riwaya');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -90,6 +93,8 @@
   /* Vision AI extras */
   --nav-h: 64px;
   --font-mono-vision: 'JetBrains Mono', monospace;
+  --font-vision: 'TheSeasons-Bold', 'TheSeasons-Regular', serif;
+  --font-headline: '29LT Riwaya', serif;
 }
 
 .dark {
@@ -143,6 +148,10 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-headline);
+    font-weight: 600;
+  }
   img { display: block; max-width: 100%; height: auto; }
   a { text-decoration: none; }
   ul { list-style: none; }
@@ -177,7 +186,7 @@
   height: 90px;
   width: auto;
   margin: 0.5rem 2rem;
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-vision), sans-serif;
   font-size: 3.5em;
   font-weight: 700;
   letter-spacing: -0.02em;

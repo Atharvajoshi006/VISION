@@ -76,18 +76,21 @@ export default function StudentAuthPage() {
           </div>
 
           <h1 className="text-[clamp(2.2rem,4vw,3.2rem)] font-black leading-[1.08] tracking-[-0.03em] mb-5">
-            Your <span style={{ background: "linear-gradient(135deg, #a78bfa, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>cognitive journey</span><br />starts here.
+            The future of <br />
+            <span style={{ background: "linear-gradient(135deg, #a78bfa, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              intelligent learning.
+            </span>
           </h1>
-          <p className="text-[1rem] leading-[1.7] max-w-[400px] text-muted-foreground">
-            Vision AI adapts to your unique learning pattern in real-time, building a neural map of your knowledge and accelerating your mastery.
+          <p className="text-[1rem] leading-[1.7] max-w-[420px] text-muted-foreground">
+            Vision AI leverages advanced performance analytics to create a hyper-personalized education environment. Stop following a syllabus and start following your data.
           </p>
 
           <div className="flex flex-col gap-3.5 mt-10">
             {[
-              { icon: BrainCircuit, text: "Adaptive AI learning engine" },
-              { icon: Activity, text: "Real-time cognitive analytics" },
-              { icon: PlaySquare, text: "Curated video library (Netflix-style)" },
-              { icon: Zap, text: "Personalised study sessions" },
+              { icon: BrainCircuit, text: "Neural performance mapping" },
+              { icon: Activity, text: "Real-time adaptive feedback" },
+              { icon: Zap, text: "Cognitive load optimization" },
+              { icon: PlaySquare, text: "Performance-synced curriculum" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 text-[0.88rem] text-muted-foreground">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-indigo-500/20 bg-indigo-500/10">

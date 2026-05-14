@@ -8,8 +8,6 @@ from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from apps.users.constants import UserRole
-
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
@@ -24,12 +22,12 @@ def create_role_profile(sender, instance: User, created: bool, **kwargs):
     if not created:
         return
 
-    if instance.role == UserRole.STUDENT:
-        from apps.students.models import StudentProfile
+    if instance.role == "student":
+        from apps.users.models import StudentProfile
         StudentProfile.objects.get_or_create(user=instance)
         logger.info("StudentProfile created for user %s", instance.id)
 
-    elif instance.role == UserRole.TUTOR:
-        from apps.tutors.models import TutorProfile
+    elif instance.role == "tutor":
+        from apps.users.models import TutorProfile
         TutorProfile.objects.get_or_create(user=instance)
         logger.info("TutorProfile created for user %s", instance.id)

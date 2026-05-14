@@ -39,6 +39,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, "swagger_fake_view", False) or not user.is_authenticated:
+            return Course.objects.none()
+            
         if user.role == "student":
             return Course.objects.filter(is_published=True).prefetch_related("concepts", "lessons")
         elif user.role == "tutor":

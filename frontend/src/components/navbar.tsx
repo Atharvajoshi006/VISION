@@ -48,7 +48,7 @@ export default function Navbar() {
             />
           </div>
         </div>
-        <span className="text-[1.05rem] font-bold tracking-[-0.03em] text-[var(--foreground)] bg-clip-text">
+        <span className="text-[1.05rem] font-bold tracking-[-0.03em] text-[var(--foreground)] bg-clip-text" style={{ fontFamily: 'var(--font-vision)' }}>
           VISION
         </span>
       </div>

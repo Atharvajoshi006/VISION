@@ -83,7 +83,7 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.07, ease }}
             className="font-extrabold tracking-[-0.04em] leading-none mb-5 text-[var(--foreground)]"
-            style={{ fontSize: "clamp(3.5rem, 8vw, 5.5rem)" }}
+            style={{ fontSize: "clamp(3.5rem, 8vw, 5.5rem)", fontFamily: 'var(--font-vision)', letterSpacing: '0.02em' }}
           >
             VISION
           </motion.h1>

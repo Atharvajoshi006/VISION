@@ -165,7 +165,7 @@ export default function PlasmaCanvas() {
 
     gl.uniform3f(uColor, 0.6549, 0.5451, 0.9804);
     gl.uniform1f(uUseColor, 1.0);
-    gl.uniform1f(uSpeed, 0.4);
+    gl.uniform1f(uSpeed, 1.2); // Accelerated speed from 0.4 to 1.2
     gl.uniform1f(uDir, 1.0);
     gl.uniform1f(uScale, 1.0);
     gl.uniform1f(uOpacity, 0.82);
@@ -180,7 +180,7 @@ export default function PlasmaCanvas() {
     let isVisible = true;
     let tabVisible = !document.hidden;
     let lastRender = 0;
-    const FRAME_INTERVAL = 1000 / 30;
+    const FRAME_INTERVAL = 1000 / 60; // Increased frame rate from 30 to 60 for smoother high-speed motion
     const t0 = performance.now();
 
     const loop = (t: number) => {

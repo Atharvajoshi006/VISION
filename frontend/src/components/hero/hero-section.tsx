@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
 import dynamic from "next/dynamic";
-import AuthOverlay from "@/components/auth-overlay";
+import Link from "next/link";
 
 const PlasmaCanvas = dynamic(
   () => import("@/components/hero/plasma-canvas"),
@@ -13,8 +12,6 @@ const PlasmaCanvas = dynamic(
 const ease = [0.215, 0.61, 0.355, 1] as [number, number, number, number];
 
 export default function HeroSection() {
-  const [authOpen, setAuthOpen] = useState(false);
-
   return (
     <>
       <section
@@ -124,13 +121,13 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.40, delay: 0.18, ease }}
           >
-            <button
+            <Link
               id="get-started-btn"
-              onClick={() => setAuthOpen(true)}
+              href="/auth"
               className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#1a1a1a] text-white text-[0.9rem] font-semibold rounded-full border-none cursor-pointer transition-all hover:bg-[#333] hover:-translate-y-px dark:bg-[#f0f0f8] dark:text-[#111118] dark:hover:bg-white"
             >
               Get Started for Free ↗
-            </button>
+            </Link>
           </motion.div>
         </div>
 
@@ -180,8 +177,6 @@ export default function HeroSection() {
           </div>
         </motion.div>
       </section>
-
-      <AuthOverlay isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   );
 }

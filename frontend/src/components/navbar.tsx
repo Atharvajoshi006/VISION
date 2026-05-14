@@ -76,7 +76,7 @@ export default function Navbar() {
       <div className="flex items-center gap-3">
         <ThemeToggle />
         <Link
-          href="/auth/student"
+          href="/auth"
           className="px-[0.85rem] py-[0.4rem] text-[0.875rem] font-medium text-[var(--muted-foreground)] rounded-lg transition-colors hover:text-[var(--foreground)]"
         >
           Log In

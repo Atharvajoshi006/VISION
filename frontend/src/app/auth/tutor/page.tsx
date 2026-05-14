@@ -75,8 +75,8 @@ export default function TutorAuthPage() {
           <h1 className="text-[clamp(2.2rem,4vw,3.2rem)] font-black leading-[1.08] tracking-[-0.03em] mb-5">
             Shape the minds<br />of <span style={{ background: "linear-gradient(135deg, #ffca28, #f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>tomorrow.</span>
           </h1>
-          <p className="text-[1rem] leading-[1.7] max-w-[400px] text-muted-foreground">
-            Access your cognitive dashboard, manage adaptive curricula, and track the neural progress of every student in your cohort — all in one place.
+          <p className="text-[1rem] leading-[1.7] max-w-[420px] text-muted-foreground">
+            VISION empowers instructors with neural-sync technology. Stop managing spreadsheets and start orchestrating cognitive growth with real-time performance mapping.
           </p>
 
           <div className="flex flex-col gap-3.5 mt-10">
@@ -96,28 +96,7 @@ export default function TutorAuthPage() {
           </div>
         </div>
 
-        <div className="flex gap-8 mt-12">
-          {[
-            { value: "340+", label: "Active Tutors" },
-            { value: "98%",  label: "Student Satisfaction" },
-            { value: "4.9★", label: "Platform Rating" },
-          ].map((s) => (
-            <div key={s.label}>
-              <h3
-                className="text-[1.9rem] font-black tracking-[-0.03em]"
-                style={{ background: "linear-gradient(to right, #ffca28, #f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-              >
-                {s.value}
-              </h3>
-              <p
-                className="text-[0.68rem] tracking-[0.08em] uppercase mt-1 text-muted-foreground/80"
-                style={{ fontFamily: "var(--font-jetbrains, monospace)" }}
-              >
-                {s.label}
-              </p>
-            </div>
-          ))}
-        </div>
+        {/* Stats removed as requested to match student portal */}
       </div>
 
       {/* Right Panel */}

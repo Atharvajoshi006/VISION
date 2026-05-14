@@ -1,10 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, BookOpen, CheckCircle2, Zap, X } from "lucide-react";
+import { Bell, BookOpen, CheckCircle2, Zap, X, Users, MessageSquare, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
-const NOTIFICATIONS = [
+const STUDENT_NOTIFICATIONS = [
   {
     id: 1,
     icon: <BookOpen size={14} className="text-[#a78bfa]" />,
@@ -12,6 +12,7 @@ const NOTIFICATIONS = [
     desc: "Wave Function Collapse is now available in Quantum Mechanics.",
     time: "2m ago",
     unread: true,
+    theme: "#a78bfa"
   },
   {
     id: 2,
@@ -20,6 +21,7 @@ const NOTIFICATIONS = [
     desc: "You scored 94% on Calculus III: Vector Analysis.",
     time: "1h ago",
     unread: true,
+    theme: "#34d399"
   },
   {
     id: 3,
@@ -28,22 +30,58 @@ const NOTIFICATIONS = [
     desc: "Keep your 7-day learning streak going! Study for 15 more minutes.",
     time: "3h ago",
     unread: false,
+    theme: "#fbbf24"
+  },
+];
+
+const TUTOR_NOTIFICATIONS = [
+  {
+    id: 101,
+    icon: <AlertCircle size={14} className="text-red-500" />,
+    title: "Cohort Alert",
+    desc: "Calculus III cohort is showing high cognitive overload in Module 4.",
+    time: "5m ago",
+    unread: true,
+    theme: "#ef4444"
+  },
+  {
+    id: 102,
+    icon: <Users size={14} className="text-amber-500" />,
+    title: "New Submissions",
+    desc: "12 students have submitted their 'Quantum Fields' assignment.",
+    time: "45m ago",
+    unread: true,
+    theme: "#f59e0b"
+  },
+  {
+    id: 103,
+    icon: <MessageSquare size={14} className="text-blue-500" />,
+    title: "Platform Feedback",
+    desc: "New engagement report generated for Physics 101: 12% drop detected.",
+    time: "2h ago",
+    unread: false,
+    theme: "#3b82f6"
   },
 ];
 
 interface NotificationDropdownProps {
   expanded: boolean;
+  role?: "student" | "tutor";
 }
 
-export default function NotificationDropdown({ expanded }: NotificationDropdownProps) {
+export default function NotificationDropdown({ expanded, role = "student" }: NotificationDropdownProps) {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState<number[]>([]);
 
-  const unreadCount = NOTIFICATIONS.filter(
+  const data = role === "tutor" ? TUTOR_NOTIFICATIONS : STUDENT_NOTIFICATIONS;
+
+  const unreadCount = data.filter(
     (n) => n.unread && !dismissed.includes(n.id)
   ).length;
 
-  const visible = NOTIFICATIONS.filter((n) => !dismissed.includes(n.id));
+  const visible = data.filter((n) => !dismissed.includes(n.id));
+
+  const themeColor = role === "tutor" ? "#f59e0b" : "#a78bfa";
 
   return (
     <div className="relative">
@@ -54,7 +92,10 @@ export default function NotificationDropdown({ expanded }: NotificationDropdownP
         <div className="min-w-[32px] flex items-center justify-center group-hover:scale-110 transition-transform relative">
           <Bell size={22} />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#a78bfa] text-[9px] font-bold text-white flex items-center justify-center">
+            <span 
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
+              style={{ backgroundColor: themeColor }}
+            >
               {unreadCount}
             </span>
           )}
@@ -82,12 +123,12 @@ export default function NotificationDropdown({ expanded }: NotificationDropdownP
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
               transition={{ duration: 0.18, ease: [0.215, 0.61, 0.355, 1] }}
-              className="absolute left-[72px] bottom-0 z-[101] w-[340px] bg-card/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden"
+              className="absolute left-[70px] bottom-2 z-[999] w-[340px] bg-card/95 backdrop-blur-2xl border border-border rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden"
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <h4 className="text-sm font-bold">Notifications</h4>
                 {unreadCount > 0 && (
-                  <span className="text-[11px] text-[#a78bfa] font-semibold">
+                  <span className="text-[11px] font-semibold" style={{ color: themeColor }}>
                     {unreadCount} unread
                   </span>
                 )}

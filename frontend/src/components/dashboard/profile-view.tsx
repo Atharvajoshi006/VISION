@@ -45,7 +45,7 @@ export default function ProfileView() {
       <div className="bg-card border border-border rounded-2xl p-6 mb-5 flex items-center gap-6">
         <div className="relative">
           <img
-            src={profile.avatar}
+            src={profile.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=fallback"}
             alt={profile.name}
             className="w-20 h-20 rounded-full object-cover border-2 border-primary/30"
           />

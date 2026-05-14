@@ -114,6 +114,9 @@ class StudentProfile(TimeStampedModel):
         ],
         default="mixed",
     )
+    academic_level = models.CharField(max_length=100, blank=True)
+    disciplines = models.JSONField(default=list)
+    learning_intensity = models.CharField(max_length=50, default="Standard")
     target_completion_date = models.DateField(null=True, blank=True)
     enrolled_courses_count = models.PositiveIntegerField(default=0)
     total_study_hours = models.FloatField(default=0.0)

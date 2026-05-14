@@ -20,16 +20,20 @@ env = environ.Env(
     REDIS_URL=(str, "redis://127.0.0.1:6379/0"),
     CELERY_BROKER_URL=(str, "redis://127.0.0.1:6379/1"),
     CELERY_RESULT_BACKEND=(str, "redis://127.0.0.1:6379/2"),
+    CELERY_TASK_ALWAYS_EAGER=(bool, False),
     GEMINI_API_KEY=(str, ""),
     GEMINI_MODEL=(str, "gemini-1.5-flash"),
-    JWT_ACCESS_TOKEN_LIFETIME_MINUTES=(int, 60),
-    JWT_REFRESH_TOKEN_LIFETIME_DAYS=(int, 7),
     ML_MODELS_DIR=(str, "ml_models/"),
     ENABLE_ML_PREDICTIONS=(bool, True),
     ENABLE_GEMINI_AI=(bool, True),
     ENABLE_ADAPTIVE_INTERVENTIONS=(bool, True),
     LOG_LEVEL=(str, "INFO"),
     FRONTEND_URL=(str, "http://localhost:3000"),
+    GOOGLE_CLIENT_ID=(str, ""),
+    GOOGLE_CLIENT_SECRET=(str, ""),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000", "http://127.0.0.1:3000"]),
+    SUPABASE_URL=(str, ""),
+    SUPABASE_JWT_SECRET=(str, ""),
 )
 
 # Read .env file from backend root
@@ -41,9 +45,15 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+CORS_ALLOW_ALL_ORIGINS = False
+
+# Google OAuth Credentials
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 
 INSTALLED_APPS = [
-    # Django core
+    # Third-party
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -52,8 +62,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party
     "rest_framework",
-    "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
     "django_celery_results",
@@ -121,30 +129,45 @@ DATABASES = {
 # ==============================================================================
 REDIS_URL = env("REDIS_URL")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            "SOCKET_TIMEOUT": 5,
-            "IGNORE_EXCEPTIONS": True,
-        },
-        "KEY_PREFIX": "vision",
-        "TIMEOUT": 300,  # 5 minutes default
+# Try Redis cache — fall back to local memory if Redis not available
+try:
+    import redis as _redis_lib
+    _redis_lib.StrictRedis.from_url(REDIS_URL, socket_connect_timeout=2).ping()
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "IGNORE_EXCEPTIONS": True,
+            },
+            "KEY_PREFIX": "vision",
+            "TIMEOUT": 300,
+        }
     }
-}
+except Exception:
+    # Redis not available (dev without Redis) — use in-memory cache
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "vision-dev-cache",
+        }
+    }
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # ==============================================================================
 # Authentication & DRF
 # ==============================================================================
+# Supabase JWT verification — replaces SimpleJWT entirely
+SUPABASE_URL = env("SUPABASE_URL")
+SUPABASE_JWT_SECRET = env("SUPABASE_JWT_SECRET")
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "apps.authentication.supabase_auth.SupabaseAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
@@ -163,8 +186,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/hour",
         "user": "1000/hour",
-        "ai_generation": "20/hour",  # rate-limit Gemini calls
-        "tracking": "500/minute",    # high-frequency event ingestion
+        "ai_generation": "20/hour",
+        "tracking": "500/minute",
     },
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -174,27 +197,11 @@ REST_FRAMEWORK = {
 }
 
 # ==============================================================================
-# JWT Configuration
-# ==============================================================================
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=env.int("JWT_ACCESS_TOKEN_LIFETIME_MINUTES")
-    ),
-    "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=env.int("JWT_REFRESH_TOKEN_LIFETIME_DAYS")
-    ),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": True,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-}
-
-# ==============================================================================
 # Celery — Async Intelligence Processing
 # ==============================================================================
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

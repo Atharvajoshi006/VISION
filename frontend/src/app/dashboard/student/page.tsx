@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   Play, Info, Brain, Home, List, BarChart2, User,
@@ -20,6 +20,8 @@ import ProfileView from "@/components/dashboard/profile-view";
 import { useToast } from "@/components/ui/toast";
 import { FEATURED_COURSE, COURSE_ROWS } from "@/lib/dashboard-data";
 import type { CourseItem } from "@/lib/dashboard-data";
+import { useApiClient } from "@/lib/api";
+import { useVisionIntelligence, trackEvent } from "@/lib/use-vision-intelligence";
 
 const INITIAL_VISIBLE = 4;
 const LOAD_MORE_COUNT = 3;
@@ -184,13 +186,80 @@ function CourseRow({ row, onPlay, onSave, isSavedFn }: {
 type View = "home" | "mylist" | "analytics" | "profile";
 
 export default function StudentDashboard() {
+  const [mounted, setMounted] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isSplitView, setIsSplitView] = useState(false);
   const [activeView, setActiveView] = useState<View>("home");
   const { profile, saveCourse, removeCourse, isSaved } = useUserStore();
   const { addToast } = useToast();
+  const apiClient = useApiClient();
+  const { recommendations, interventions, prediction, cognitiveProfile, isLoading: intelligenceLoading } = useVisionIntelligence();
 
-  const handlePlay = (item: CourseItem) => addToast(`▶ Starting "${item.title}"...`, "success");
+  // Session tracking — generates a unique session ID per page visit
+  const sessionIdRef = useRef<string>("");
+
+  const [courseRows, setCourseRows] = useState(COURSE_ROWS);
+
+  // Set mounted state and session ID
+  useEffect(() => {
+    sessionIdRef.current = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    setMounted(true);
+  }, []);
+
+  // Track session_start when dashboard loads, session_end when user leaves
+  useEffect(() => {
+    if (!mounted) return;
+    const sid = sessionIdRef.current;
+    trackEvent({ event_type: "session_start", session_id: sid });
+    return () => {
+      trackEvent({ event_type: "session_end", session_id: sid });
+    };
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    async function fetchCourses() {
+      try {
+        const res = await apiClient.get('/courses/');
+        const courses = res.data.results || res.data;
+        if (courses && courses.length > 0) {
+          const mappedItems: CourseItem[] = courses.map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            img: c.thumbnail || "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800&auto=format&fit=crop",
+            match: "95%",
+            duration: `${c.estimated_hours || 5}h`,
+            tags: c.tags || [],
+          }));
+
+          setCourseRows((prev) => {
+            const newRows = [...prev];
+            // Replace the first row with backend data
+            newRows[0] = { 
+              ...newRows[0], 
+              title: "From Your Database",
+              items: mappedItems 
+            };
+            return newRows;
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch courses:", err);
+      }
+    }
+    fetchCourses();
+  }, [apiClient, mounted]);
+
+  const handlePlay = async (item: CourseItem) => {
+    addToast(`▶ Starting "${item.title}"...`, "success");
+    // Track lesson_start behavioral event
+    trackEvent({
+      event_type: "lesson_start",
+      course_id: item.id,
+      session_id: sessionIdRef.current,
+      metadata: { title: item.title },
+    });
+  };
 
   const handleSave = (item: CourseItem) => {
     if (isSaved(item.id)) {
@@ -208,6 +277,10 @@ export default function StudentDashboard() {
     { icon: <BarChart2 size={22} />, label: "Analytics", view: "analytics" },
     { icon: <User size={22} />, label: "Profile", view: "profile" },
   ];
+
+  if (!mounted) {
+    return null; // Prevent hydration mismatch
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-[#a78bfa] selection:text-white transition-colors duration-300 flex">
@@ -319,7 +392,7 @@ export default function StudentDashboard() {
             onClick={() => setActiveView("profile")}
             className="pt-3 border-t border-border flex items-center gap-4 px-2 group w-full text-left"
           >
-            <img src={profile.avatar} alt={profile.name} className="w-8 h-8 rounded-full border border-border object-cover min-w-[32px] group-hover:scale-110 transition-transform" />
+            <img src={profile.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=fallback"} alt={profile.name} className="w-8 h-8 rounded-full border border-border object-cover min-w-[32px] group-hover:scale-110 transition-transform" />
             <AnimatePresence>
               {sidebarExpanded && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col overflow-hidden whitespace-nowrap">
@@ -376,9 +449,31 @@ export default function StudentDashboard() {
                 </motion.div>
               </div>
 
+              {/* ── Adaptive Interventions Banner (real backend data) ── */}
+              {interventions.length > 0 && (
+                <div className="relative z-20 px-8 md:px-12 pt-6 space-y-3">
+                  {interventions.slice(0, 2).map((iv) => (
+                    <motion.div
+                      key={iv.id}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-start gap-4 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <Brain size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-amber-400">{iv.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{iv.message}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
               {/* Course Rows */}
               <div className="relative z-20 pt-8">
-                {COURSE_ROWS.map((row) => (
+                {courseRows.map((row) => (
                   <CourseRow key={row.id} row={row} onPlay={handlePlay} onSave={handleSave} isSavedFn={isSaved} />
                 ))}
               </div>
@@ -398,7 +493,7 @@ export default function StudentDashboard() {
           {/* ANALYTICS VIEW */}
           {activeView === "analytics" && (
             <motion.div key="analytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <AnalyticsView />
+              <AnalyticsView cognitiveProfile={cognitiveProfile} prediction={prediction} />
             </motion.div>
           )}
 

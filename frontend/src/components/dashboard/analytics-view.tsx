@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Clock, TrendingUp, Zap, Target, BookOpen, BarChart2 } from "lucide-react";
+import { Activity, Clock, TrendingUp, Zap, Target, BookOpen, BarChart2, Brain, AlertTriangle } from "lucide-react";
 import { useUserStore } from "@/store/use-user-store";
+import type { VisionCognitiveProfile, VisionPrediction } from "@/lib/use-vision-intelligence";
 
 const SUBJECTS = [
   { label: "Physics", pct: 82, color: "#a78bfa" },
@@ -17,8 +18,27 @@ const STREAK_ACTIVE = [true, true, true, true, false, false, false];
 const WEEKLY_HOURS = [2.5, 3.0, 1.5, 4.0, 2.0, 0, 0];
 const MAX_HOURS = 5;
 
-export default function AnalyticsView() {
+export default function AnalyticsView({ cognitiveProfile, prediction }: {
+  cognitiveProfile?: VisionCognitiveProfile | null;
+  prediction?: VisionPrediction | null;
+}) {
   const { profile, savedCourses } = useUserStore();
+
+  // Build subject mastery from cognitive profile if available
+  const SUBJECTS = cognitiveProfile ? [
+    { label: "Logic", pct: Math.round(cognitiveProfile.logical_reasoning_strength * 100), color: "#a78bfa" },
+    { label: "Retention", pct: Math.round(cognitiveProfile.retention_capability * 100), color: "#6366f1" },
+    { label: "Abstraction", pct: Math.round(cognitiveProfile.abstraction_handling * 100), color: "#34d399" },
+    { label: "Consistency", pct: Math.round(cognitiveProfile.learning_consistency * 100), color: "#f59e0b" },
+  ] : [
+    { label: "Physics", pct: 82, color: "#a78bfa" },
+    { label: "CS", pct: 67, color: "#6366f1" },
+    { label: "Biology", pct: 45, color: "#34d399" },
+    { label: "Math", pct: 91, color: "#f59e0b" },
+  ];
+
+  const failureRisk = prediction ? Math.round(prediction.failure_probability * 100) : null;
+  const dropoutRisk = prediction ? Math.round(prediction.dropout_risk * 100) : null;
 
   return (
     <motion.div
@@ -153,6 +173,44 @@ export default function AnalyticsView() {
           </div>
         </div>
       </div>
+
+      {/* ── ML Prediction Risk Panel (real data when available) ── */}
+      {(failureRisk !== null || dropoutRisk !== null) && (
+        <div className="mt-6 bg-card border border-border rounded-2xl p-6">
+          <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
+            <Brain size={14} className="text-[#a78bfa]" /> Vision AI Risk Assessment
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            {failureRisk !== null && (
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${failureRisk > 60 ? "bg-red-500/20 text-red-400" : failureRisk > 35 ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"}`}>
+                  <AlertTriangle size={16} />
+                </div>
+                <div>
+                  <p className={`text-lg font-black ${failureRisk > 60 ? "text-red-400" : failureRisk > 35 ? "text-amber-400" : "text-emerald-400"}`}>{failureRisk}%</p>
+                  <p className="text-xs text-muted-foreground">Failure Risk</p>
+                </div>
+              </div>
+            )}
+            {dropoutRisk !== null && (
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dropoutRisk > 60 ? "bg-red-500/20 text-red-400" : dropoutRisk > 35 ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"}`}>
+                  <Activity size={16} />
+                </div>
+                <div>
+                  <p className={`text-lg font-black ${dropoutRisk > 60 ? "text-red-400" : dropoutRisk > 35 ? "text-amber-400" : "text-emerald-400"}`}>{dropoutRisk}%</p>
+                  <p className="text-xs text-muted-foreground">Dropout Risk</p>
+                </div>
+              </div>
+            )}
+          </div>
+          {cognitiveProfile && (
+            <p className="text-xs text-muted-foreground mt-3 border-t border-border pt-3">
+              Confidence: {Math.round(cognitiveProfile.confidence_score * 100)}% · Profile builds accuracy as you interact more
+            </p>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

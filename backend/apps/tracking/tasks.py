@@ -96,7 +96,7 @@ def process_quiz_attempt_event(attempt_id: str):
             concept_name=attempt.quiz.concept.name if attempt.quiz.concept else "",
             score=attempt.score,
             attempt_number=attempt.attempt_number,
-            time_taken_seconds=attempt.time_taken_seconds if hasattr(attempt, "time_taken_seconds") else None,
+            response_time_seconds=getattr(attempt, "time_taken_seconds", None),
             metadata={"passed": attempt.passed},
         )
         process_behavioral_event.delay(str(event.id))

@@ -9,7 +9,7 @@ export interface SavedCourse {
   duration: string;
   progress?: number;
   tags?: string[];
-  savedAt: string; // ISO date — backend: timestamp from DB
+  savedAt: string;
 }
 
 interface UserState {
@@ -27,7 +27,7 @@ interface UserState {
   savedCourses: SavedCourse[];
   activeView: 'home' | 'mylist' | 'analytics' | 'profile';
 
-  // Actions — shape stays identical when backend replaces local state
+  // Actions
   setProfile: (profile: Partial<UserState['profile']>) => void;
   saveCourse: (course: SavedCourse) => void;
   removeCourse: (id: string) => void;
@@ -39,15 +39,15 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       profile: {
-        name: "Alex Mercer",
+        name: "Explorer",
         role: "Student",
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop",
+        avatar: "",
         cognitiveCapacity: "Optimal",
-        studyTime: "12.5h",
-        retention: "98%",
-        bio: "Passionate about quantum physics and machine learning. Learning faster every day.",
-        email: "alex.mercer@visionai.edu",
-        joinDate: "January 2026",
+        studyTime: "0h",
+        retention: "0%",
+        bio: "Learning accelerated by Vision AI.",
+        email: "",
+        joinDate: "",
       },
       savedCourses: [],
       activeView: 'home',

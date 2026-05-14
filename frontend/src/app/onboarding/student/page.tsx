@@ -7,16 +7,43 @@ import { Brain, Sparkles, Target, Zap } from "lucide-react";
 import PlasmaCanvas from "@/components/hero/plasma-canvas";
 import ThemeToggle from "@/components/theme-toggle";
 
+import { api } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+
 export default function StudentOnboarding() {
   const router = useRouter();
+  const { addToast } = useToast();
   const [step, setStep] = useState(1);
   const [isFinishing, setIsFinishing] = useState(false);
+  
+  // Selection state
+  const [level, setLevel] = useState("");
+  const [disciplines, setDisciplines] = useState<string[]>([]);
+  const [intensity, setIntensity] = useState("Standard");
 
-  const handleNext = () => {
+  const toggleDiscipline = (val: string) => {
+    setDisciplines(prev => 
+      prev.includes(val) ? prev.filter(i => i !== val) : [...prev, val]
+    );
+  };
+
+  const handleNext = async () => {
     if (step < 3) setStep(step + 1);
     else {
       setIsFinishing(true);
-      setTimeout(() => router.push("/dashboard/student"), 1000);
+      try {
+        await api.patch("/users/me/student-profile/", {
+          academic_level: level,
+          disciplines: disciplines,
+          learning_intensity: intensity,
+        });
+        addToast("Profile synchronized successfully!", "success");
+        setTimeout(() => router.push("/dashboard/student"), 800);
+      } catch (err) {
+        console.error("Failed to save onboarding data:", err);
+        addToast("Sync failed, but you can continue.", "warning");
+        setTimeout(() => router.push("/dashboard/student"), 800);
+      }
     }
   };
 
@@ -94,10 +121,16 @@ export default function StudentOnboarding() {
                 <p className="text-muted-foreground mb-8 leading-relaxed">To tailor your cognitive map, what describes your current academic level?</p>
                 
                 <div className="grid gap-3">
-                  {["High School", "Undergraduate", "Postgraduate", "Professional / Continuing"].map(level => (
-                    <label key={level} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
-                      <input type="radio" name="level" className="mr-4 accent-[#a78bfa] w-4 h-4" />
-                      <span className="font-medium group-hover:text-foreground transition-colors">{level}</span>
+                  {["High School", "Undergraduate", "Postgraduate", "Professional / Continuing"].map(l => (
+                    <label key={l} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
+                      <input 
+                        type="radio" 
+                        name="level" 
+                        className="mr-4 accent-[#a78bfa] w-4 h-4" 
+                        checked={level === l}
+                        onChange={() => setLevel(l)}
+                      />
+                      <span className="font-medium group-hover:text-foreground transition-colors">{l}</span>
                     </label>
                   ))}
                 </div>
@@ -115,7 +148,12 @@ export default function StudentOnboarding() {
                 <div className="grid grid-cols-2 gap-3">
                   {["Computer Science", "Mathematics", "Physics", "Biology", "Economics", "Literature"].map(subject => (
                     <label key={subject} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
-                      <input type="checkbox" className="mr-3 accent-[#a78bfa] w-4 h-4 rounded" />
+                      <input 
+                        type="checkbox" 
+                        className="mr-3 accent-[#a78bfa] w-4 h-4 rounded" 
+                        checked={disciplines.includes(subject)}
+                        onChange={() => toggleDiscipline(subject)}
+                      />
                       <span className="font-medium text-sm group-hover:text-foreground transition-colors">{subject}</span>
                     </label>
                   ))}
@@ -139,7 +177,13 @@ export default function StudentOnboarding() {
                   ].map(pace => (
                     <label key={pace.title} className="flex flex-col p-5 rounded-xl cursor-pointer transition-all border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/[0.03] hover:border-[#a78bfa]/50 hover:bg-[#a78bfa]/5">
                       <div className="flex items-center mb-1">
-                        <input type="radio" name="pace" className="mr-3 accent-[#a78bfa]" />
+                        <input 
+                          type="radio" 
+                          name="pace" 
+                          className="mr-3 accent-[#a78bfa]" 
+                          checked={intensity === pace.title}
+                          onChange={() => setIntensity(pace.title)}
+                        />
                         <span className="font-bold">{pace.title}</span>
                       </div>
                       <span className="text-sm text-muted-foreground ml-6">{pace.desc}</span>

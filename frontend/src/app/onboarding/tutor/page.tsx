@@ -7,16 +7,42 @@ import { BookOpen, Users, Clock, Zap } from "lucide-react";
 import PlasmaCanvas from "@/components/hero/plasma-canvas";
 import ThemeToggle from "@/components/theme-toggle";
 
+import { api } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+
 export default function TutorOnboarding() {
   const router = useRouter();
+  const { addToast } = useToast();
   const [step, setStep] = useState(1);
   const [isFinishing, setIsFinishing] = useState(false);
+  
+  // Selection state
+  const [expertise, setExpertise] = useState<string[]>([]);
+  const [targetLevel, setTargetLevel] = useState("");
+  const [format, setFormat] = useState("Video Lectures");
 
-  const handleNext = () => {
+  const toggleExpertise = (val: string) => {
+    setExpertise(prev => 
+      prev.includes(val) ? prev.filter(i => i !== val) : [...prev, val]
+    );
+  };
+
+  const handleNext = async () => {
     if (step < 3) setStep(step + 1);
     else {
       setIsFinishing(true);
-      setTimeout(() => router.push("/dashboard/tutor"), 1000);
+      try {
+        await api.patch("/users/me/tutor-profile/", {
+          expertise_areas: expertise,
+          qualifications: `Targeting ${targetLevel} students with ${format}.`,
+        });
+        addToast("Tutor profile established!", "success");
+        setTimeout(() => router.push("/dashboard/tutor"), 800);
+      } catch (err) {
+        console.error("Failed to save tutor onboarding:", err);
+        addToast("Profile sync failed, continuing...", "warning");
+        setTimeout(() => router.push("/dashboard/tutor"), 800);
+      }
     }
   };
 
@@ -96,7 +122,12 @@ export default function TutorOnboarding() {
                 <div className="grid grid-cols-2 gap-3">
                   {["Computer Science", "Mathematics", "Physics", "Biology", "Economics", "Literature"].map(subject => (
                     <label key={subject} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
-                      <input type="checkbox" className="mr-3 accent-[#ffca28] w-4 h-4 rounded" />
+                      <input 
+                        type="checkbox" 
+                        className="mr-3 accent-[#ffca28] w-4 h-4 rounded" 
+                        checked={expertise.includes(subject)}
+                        onChange={() => toggleExpertise(subject)}
+                      />
                       <span className="font-medium text-sm group-hover:text-foreground transition-colors">{subject}</span>
                     </label>
                   ))}
@@ -113,10 +144,16 @@ export default function TutorOnboarding() {
                 <p className="text-muted-foreground mb-8 leading-relaxed">Select the primary academic level of your students.</p>
                 
                 <div className="grid gap-3">
-                  {["High School", "Undergraduate", "Postgraduate", "Professional / Continuing"].map(level => (
-                    <label key={level} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
-                      <input type="radio" name="level" className="mr-4 accent-[#ffca28] w-4 h-4" />
-                      <span className="font-medium group-hover:text-foreground transition-colors">{level}</span>
+                  {["High School", "Undergraduate", "Postgraduate", "Professional / Continuing"].map(l => (
+                    <label key={l} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
+                      <input 
+                        type="radio" 
+                        name="level" 
+                        className="mr-4 accent-[#ffca28] w-4 h-4" 
+                        checked={targetLevel === l}
+                        onChange={() => setTargetLevel(l)}
+                      />
+                      <span className="font-medium group-hover:text-foreground transition-colors">{l}</span>
                     </label>
                   ))}
                 </div>
@@ -136,13 +173,19 @@ export default function TutorOnboarding() {
                     { title: "Video Lectures", desc: "Long-form cinematic educational videos." },
                     { title: "Interactive Modules", desc: "Bite-sized, highly interactive exercises." },
                     { title: "Live Mentorship", desc: "Real-time 1-on-1 or group cognitive sessions." }
-                  ].map(format => (
-                    <label key={format.title} className="flex flex-col p-5 rounded-xl cursor-pointer transition-all border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/[0.03] hover:border-[#ffca28]/50 hover:bg-[#ffca28]/5">
+                  ].map(f => (
+                    <label key={f.title} className="flex flex-col p-5 rounded-xl cursor-pointer transition-all border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/[0.03] hover:border-[#ffca28]/50 hover:bg-[#ffca28]/5">
                       <div className="flex items-center mb-1">
-                        <input type="radio" name="format" className="mr-3 accent-[#ffca28]" />
-                        <span className="font-bold">{format.title}</span>
+                        <input 
+                          type="radio" 
+                          name="format" 
+                          className="mr-3 accent-[#ffca28]" 
+                          checked={format === f.title}
+                          onChange={() => setFormat(f.title)}
+                        />
+                        <span className="font-bold">{f.title}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground ml-6">{format.desc}</span>
+                      <span className="text-sm text-muted-foreground ml-6">{f.desc}</span>
                     </label>
                   ))}
                 </div>

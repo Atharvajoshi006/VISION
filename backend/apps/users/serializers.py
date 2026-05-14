@@ -27,8 +27,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = [
-            "learning_style", "target_completion_date",
-            "enrolled_courses_count", "total_study_hours",
+            "learning_style", "academic_level", "disciplines", "learning_intensity",
+            "target_completion_date", "enrolled_courses_count", "total_study_hours",
             "streak_days", "last_activity_date",
         ]
         read_only_fields = ["enrolled_courses_count", "total_study_hours", "streak_days"]

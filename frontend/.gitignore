@@ -23,7 +23,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.local
+.env.*
 .env*.local
+!.env.example
 
 # vercel
 .vercel
@@ -31,3 +35,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -33,8 +33,6 @@ export const metadata: Metadata = {
   },
 };
 
-const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
 export default function RootLayout({
   children,
 }: {
@@ -57,3 +55,4 @@ export default function RootLayout({
     </html>
   );
 }
+

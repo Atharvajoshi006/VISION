@@ -25,14 +25,11 @@ export default function PageLoader() {
     <div ref={loaderRef} id="page-loader" aria-hidden="true">
       <div className="loader-wrapper">
         <span className="loader-letter">V</span>
-        <span className="loader-letter">i</span>
-        <span className="loader-letter">s</span>
-        <span className="loader-letter">i</span>
-        <span className="loader-letter">o</span>
-        <span className="loader-letter">n</span>
-        <span className="loader-letter loader-space">&nbsp;</span>
-        <span className="loader-letter">A</span>
         <span className="loader-letter">I</span>
+        <span className="loader-letter">S</span>
+        <span className="loader-letter">I</span>
+        <span className="loader-letter">O</span>
+        <span className="loader-letter">N</span>
         <div className="loader" />
       </div>
       <div className="loader-bar-track">

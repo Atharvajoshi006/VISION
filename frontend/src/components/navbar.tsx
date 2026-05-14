@@ -26,8 +26,31 @@ export default function Navbar() {
       ].join(" ")}
     >
       {/* Logo */}
-      <div className="text-[1.1rem] font-bold tracking-[-0.02em] text-[var(--foreground)]">
-        Vision AI
+      <div className="flex items-center gap-2">
+        <div className="relative w-9 h-9 flex items-center justify-center group">
+          {/* Animated background glow */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden
+            bg-white dark:bg-white/90
+            shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07),0_0_0_1px_rgba(0,0,0,0.03)]
+            dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_4_12px_rgba(0,0,0,0.4)]
+            transition-transform duration-300 group-hover:scale-105"
+            style={{
+              maskImage: "radial-gradient(circle at center, black 60%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(circle at center, black 60%, transparent 100%)",
+            }}
+          >
+            <img
+              src="/vision-logo.png"
+              alt="VISION logo"
+              className="w-full h-full object-contain mix-blend-multiply"
+            />
+          </div>
+        </div>
+        <span className="text-[1.05rem] font-bold tracking-[-0.03em] text-[var(--foreground)] bg-clip-text">
+          VISION
+        </span>
       </div>
 
       {/* Nav links */}

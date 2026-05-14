@@ -127,7 +127,7 @@ export default function UnifiedAuthPage() {
         </div>
 
         <div className="text-[0.72rem] text-muted-foreground/60">
-          Neural Handshake Protocol v4.2.0-stable
+          Neural Handshake Protocol v4.2.1-mesh
         </div>
       </div>
 

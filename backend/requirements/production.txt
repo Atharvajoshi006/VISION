@@ -1,6 +1,7 @@
-# ─── Inherits base ─────────────────────────────────────────
 -r base.txt
 
-# ─── Production extras ─────────────────────────────────────
-sentry-sdk[django]==2.10.0
-whitenoise==6.7.0
+# Production-only
+gunicorn>=22.0
+uvicorn[standard]>=0.30
+whitenoise>=6.7
+sentry-sdk>=2.5

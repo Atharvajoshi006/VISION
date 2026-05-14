@@ -1,10 +1,13 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import RecommendationViewSet
-
-router = DefaultRouter()
-router.register(r"", RecommendationViewSet, basename="recommendation")
+"""VISION — recommendations URL routing."""
+from django.urls import path
+from apps.recommendations.views import (
+    MyRecommendationsView, DismissRecommendationView,
+    ActOnRecommendationView, RefreshRecommendationsView,
+)
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("me/", MyRecommendationsView.as_view(), name="my-recommendations"),
+    path("me/refresh/", RefreshRecommendationsView.as_view(), name="refresh-recommendations"),
+    path("<uuid:pk>/dismiss/", DismissRecommendationView.as_view(), name="dismiss-recommendation"),
+    path("<uuid:pk>/act/", ActOnRecommendationView.as_view(), name="act-recommendation"),
 ]

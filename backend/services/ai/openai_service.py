@@ -10,9 +10,15 @@ from typing import List, Dict
 # --------------------------------------------------------------
 USE_LOCAL = bool(getattr(settings, "LLM_ENDPOINT", None))
 
+USE_GEMINI = bool(getattr(settings, "GEMINI_API_KEY", None))
+
 if USE_LOCAL:
     BASE_URL = settings.LLM_ENDPOINT.rstrip("/")
     HEADERS = {}
+elif USE_GEMINI:
+    # Use the Google AI Studio (Gemini) OpenAI-compatible endpoint
+    BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+    HEADERS = {"Authorization": f"Bearer {settings.GEMINI_API_KEY}"}
 else:
     BASE_URL = "https://api.openai.com/v1"
     HEADERS = {"Authorization": f"Bearer {settings.OPENAI_API_KEY}"}

@@ -1,0 +1,1 @@
+"""VISION — recommendations app init."""

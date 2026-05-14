@@ -1,81 +1,160 @@
-from __future__ import annotations
-
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+"""
+VISION Platform — User Models
+Custom User model with role-based system.
+"""
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
-from django.utils import timezone
+from django.utils.timezone import now
+from core.models import TimeStampedModel
 
 
 class UserManager(BaseUserManager):
-    """Manager that creates users using e‑mail as the unique identifier."""
+    """Custom manager for Vision User."""
 
-    def _create_user(self, email: str, password: str, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError("The Email field must be set")
+            raise ValueError("Email address is required.")
         email = self.normalize_email(email)
-        user = self.model(email=email, username=email, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, email: str, password: str = None, **extra_fields):
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        return self._create_user(email, password, **extra_fields)
-
-    def create_superuser(self, email: str, password: str, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-
-        if extra_fields.get("is_staff") is not True or extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_staff=True and is_superuser=True.")
-
-        return self._create_user(email, password, **extra_fields)
+        extra_fields.setdefault("role", User.Role.ADMIN)
+        return self.create_user(email, password, **extra_fields)
 
 
-class User(AbstractUser):
+class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     """
-    A **custom user model** that logs in with e‑mail.
-    All extra profile fields live in ``StudentProfile`` (one‑to‑one).
+    Vision User — supports Student, Tutor, Admin roles.
+    Uses email as the primary identifier.
     """
-    email = models.EmailField("e‑mail address", unique=True)
-    username = None  # we don’t use the default username field
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+
+    class Role(models.TextChoices):
+        STUDENT = "student", "Student"
+        TUTOR = "tutor", "Tutor"
+        ADMIN = "admin", "Admin"
+
+    # Identity
+    email = models.EmailField(unique=True, db_index=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    role = models.CharField(
+        max_length=20,
+        choices=Role.choices,
+        default=Role.STUDENT,
+        db_index=True,
+    )
+
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_email_verified = models.BooleanField(default=False)
+    last_login = models.DateTimeField(null=True, blank=True)
+
+    # Profile
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    bio = models.TextField(blank=True, default="")
     timezone = models.CharField(max_length=50, default="UTC")
 
+    # Metadata
+    date_joined = models.DateTimeField(default=now)
+    last_seen = models.DateTimeField(null=True, blank=True)
+
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []          # e‑mail & password are required automatically
+    REQUIRED_FIELDS = ["first_name", "last_name", "role"]
 
     objects = UserManager()
 
-    def __str__(self) -> str:
-        return self.email
+    class Meta:
+        db_table = "vision_users"
+        indexes = [
+            models.Index(fields=["role", "is_active"]),
+            models.Index(fields=["email", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.full_name} <{self.email}> [{self.role}]"
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    def is_student(self):
+        return self.role == self.Role.STUDENT
+
+    def is_tutor(self):
+        return self.role == self.Role.TUTOR
+
+    def is_admin_user(self):
+        return self.role == self.Role.ADMIN or self.is_staff
+
+    def touch_last_seen(self):
+        """Update last_seen timestamp without saving full model."""
+        User.objects.filter(pk=self.pk).update(last_seen=now())
 
 
-class StudentProfile(models.Model):
+class StudentProfile(TimeStampedModel):
     """
-    Extension of ``User`` that stores preferences and the (future) skill‑matrix.
+    Extended profile for students.
+    Stores learning preferences and metadata.
     """
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="profile"
+        User, on_delete=models.CASCADE, related_name="student_profile"
     )
-    # a free‑form JSON dict that a downstream service can fill
-    skill_matrix = models.JSONField(default=dict, blank=True)
-    prefers_video = models.BooleanField(default=True)
-    prefers_text = models.BooleanField(default=False)
-
-    class LearningStyle(models.TextChoices):
-        VISUAL = "visual", "Visual"
-        AUDITORY = "auditory", "Auditory"
-        KINESTHETIC = "kinesthetic", "Kinesthetic"
-        READING = "reading", "Reading/Writing"
-
     learning_style = models.CharField(
         max_length=20,
-        choices=LearningStyle.choices,
-        default=LearningStyle.VISUAL,
+        choices=[
+            ("visual", "Visual"),
+            ("theoretical", "Theoretical"),
+            ("mixed", "Mixed"),
+        ],
+        default="mixed",
     )
+    target_completion_date = models.DateField(null=True, blank=True)
+    enrolled_courses_count = models.PositiveIntegerField(default=0)
+    total_study_hours = models.FloatField(default=0.0)
+    streak_days = models.PositiveIntegerField(default=0)
+    last_activity_date = models.DateField(null=True, blank=True)
 
-    def __str__(self) -> str:
-        return f"Profile({self.user.email})"
+    class Meta:
+        db_table = "vision_student_profiles"
+
+    def __str__(self):
+        return f"StudentProfile({self.user.email})"
+
+
+class TutorProfile(TimeStampedModel):
+    """Extended profile for tutors."""
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="tutor_profile"
+    )
+    expertise_areas = models.JSONField(default=list)
+    qualifications = models.TextField(blank=True)
+    courses_created = models.PositiveIntegerField(default=0)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "vision_tutor_profiles"
+
+    def __str__(self):
+        return f"TutorProfile({self.user.email})"
+
+
+class PasswordResetToken(TimeStampedModel):
+    """Password reset tokens with expiry."""
+    import uuid as uuid_lib
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reset_tokens")
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "vision_password_reset_tokens"
+
+    @property
+    def is_expired(self):
+        return now() > self.expires_at

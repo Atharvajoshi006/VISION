@@ -1,0 +1,1 @@
+"""VISION — analytics app init."""

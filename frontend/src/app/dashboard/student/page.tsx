@@ -227,7 +227,7 @@ export default function StudentDashboard() {
       <motion.nav
         initial={false}
         animate={{ width: sidebarExpanded ? 260 : 80 }}
-        className="fixed left-0 top-0 h-screen z-50 bg-background/80 dark:bg-background/90 backdrop-blur-md border-r border-border flex flex-col justify-between py-6 overflow-hidden"
+        className="fixed left-0 top-0 h-screen z-50 bg-background/80 dark:bg-background/90 backdrop-blur-md border-r border-border flex flex-col justify-between py-6 overflow-visible"
         onMouseEnter={() => setSidebarExpanded(true)}
         onMouseLeave={() => setSidebarExpanded(false)}
       >
@@ -306,7 +306,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="flex flex-col gap-2 px-4">
-          <NotificationDropdown expanded={sidebarExpanded} />
+          <NotificationDropdown expanded={sidebarExpanded} role="student" />
           <div className="flex items-center gap-4 px-2 py-3">
             <div className="min-w-[32px] flex items-center justify-center"><ThemeToggle /></div>
             <AnimatePresence>

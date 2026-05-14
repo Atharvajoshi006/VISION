@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between gap-16 pb-12">
         {/* Brand */}
         <div>
-          <div className="text-[1.1rem] font-bold tracking-[-0.02em] text-[var(--foreground)] mb-3">Vision AI</div>
+          <div className="text-[1.1rem] font-bold tracking-[-0.02em] text-[var(--foreground)] mb-3 uppercase" style={{ fontFamily: 'var(--font-vision)' }}>VISION</div>
           <p className="text-[0.875rem] text-[var(--muted-foreground)] leading-[1.7]">
             Hyper-Personalized Cognitive Learning.<br />Built for the minds of tomorrow.
           </p>
@@ -66,7 +66,7 @@ export default function Footer() {
 
       {/* Bottom row */}
       <div className="max-w-[1200px] mx-auto pt-8 border-t border-black/5 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <p className="text-[0.825rem] text-[var(--muted-foreground)]">© 2026 Vision AI. All rights reserved.</p>
+        <p className="text-[0.825rem] text-[var(--muted-foreground)]">© 2026 VISION. All rights reserved.</p>
         <div className="flex gap-6">
           {["Twitter", "LinkedIn", "GitHub"].map((s) => (
             <Link

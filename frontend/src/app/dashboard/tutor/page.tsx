@@ -24,14 +24,11 @@ export default function TutorDashboard() {
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card hidden md:flex flex-col">
         <div className="p-6">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-[0_4px_16px_rgba(255,202,40,0.2)]" style={{ background: "linear-gradient(135deg, #f59e0b, #ffca28)" }}>
-              <svg width="14" height="14" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 16L20 24L12 32" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M24 32H36" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-              </svg>
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] overflow-hidden transition-transform group-hover:scale-105">
+              <img src="/vision-logo.png" alt="VISION logo" className="w-7 h-7 object-contain mix-blend-multiply" />
             </div>
-            <span className="font-bold tracking-tight">Vision AI Tutor</span>
+            <span className="font-bold tracking-tight uppercase text-[1rem]" style={{ fontFamily: 'var(--font-vision)' }}>VISION</span>
           </Link>
         </div>
         

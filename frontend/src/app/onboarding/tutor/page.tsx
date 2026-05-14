@@ -52,7 +52,7 @@ export default function TutorOnboarding() {
               <BookOpen size={24} color="#000" />
             </div>
             <h2 className="text-3xl font-black mb-3 tracking-[-0.03em]">Establish your expertise</h2>
-            <p className="text-muted-foreground mb-8 leading-relaxed">What disciplines will you be instructing in the Vision AI network?</p>
+            <p className="text-muted-foreground mb-8 leading-relaxed">What disciplines will you be instructing in the VISION network?</p>
             
             <div className="grid grid-cols-2 gap-3">
               {["Computer Science", "Mathematics", "Physics", "Biology", "Economics", "Literature"].map(subject => (

@@ -39,7 +39,7 @@ export default function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
               Choose your path
             </h2>
             <p className="text-muted-foreground text-base mb-10">
-              Select your role to enter the Vision AI network.
+              Select your role to enter the VISION network.
             </p>
 
             <div className="flex gap-6 justify-center flex-wrap">

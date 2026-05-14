@@ -52,14 +52,11 @@ export default function StudentAuthPage() {
       <div
         className="flex-1 flex flex-col justify-between p-12 relative z-10 border-r border-black/10 dark:border-white/10 bg-white/60 dark:bg-[#0d0d14]/55 backdrop-blur-md transition-colors duration-300"
       >
-        <Link href="/" className="inline-flex items-center gap-2.5 w-fit">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-[0_4px_16px_rgba(99,102,241,0.4)]" style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)" }}>
-            <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 16L20 24L12 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M24 32H36" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
+        <Link href="/" className="inline-flex items-center gap-3 w-fit group">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-white/90 shadow-[0_4px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] overflow-hidden transition-transform group-hover:scale-105">
+            <img src="/vision-logo.png" alt="VISION logo" className="w-8 h-8 object-contain mix-blend-multiply" />
           </div>
-          <span className="text-[1.1rem] font-bold tracking-[-0.02em]">Vision AI</span>
+          <span className="text-[1.2rem] font-bold tracking-[-0.03em] uppercase" style={{ fontFamily: 'var(--font-vision)' }}>VISION</span>
         </Link>
 
         <div className="relative z-[1]">
@@ -82,7 +79,7 @@ export default function StudentAuthPage() {
             </span>
           </h1>
           <p className="text-[1rem] leading-[1.7] max-w-[420px] text-muted-foreground">
-            Vision AI leverages advanced performance analytics to create a hyper-personalized education environment. Stop following a syllabus and start following your data.
+            VISION leverages advanced performance analytics to create a hyper-personalized education environment. Stop following a syllabus and start following your data.
           </p>
 
           <div className="flex flex-col gap-3.5 mt-10">
@@ -102,28 +99,7 @@ export default function StudentAuthPage() {
           </div>
         </div>
 
-        <div className="flex gap-8 mt-12">
-          {[
-            { value: "94%",  label: "Avg. Improvement" },
-            { value: "2.4×", label: "Faster Retention" },
-            { value: "12k+", label: "Active Students" },
-          ].map((s) => (
-            <div key={s.label}>
-              <h3
-                className="text-[1.9rem] font-black tracking-[-0.03em]"
-                style={{ background: "linear-gradient(to right, #a78bfa, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-              >
-                {s.value}
-              </h3>
-              <p
-                className="text-[0.68rem] tracking-[0.08em] uppercase mt-1 text-muted-foreground/80"
-                style={{ fontFamily: "var(--font-jetbrains, monospace)" }}
-              >
-                {s.label}
-              </p>
-            </div>
-          ))}
-        </div>
+        {/* Stats removed as requested */}
       </div>
 
       {/* Right Panel */}
@@ -139,7 +115,7 @@ export default function StudentAuthPage() {
             {mode === "login" ? "Welcome back" : "Create account"}
           </h2>
           <p className="text-[0.9rem] text-muted-foreground">
-            {mode === "login" ? "Sign in to your student account" : "Join the Vision AI student network"}
+            {mode === "login" ? "Sign in to your student account" : "Join the VISION student network"}
           </p>
         </div>
 

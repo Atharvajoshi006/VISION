@@ -52,14 +52,11 @@ export default function TutorAuthPage() {
       <div
         className="flex-1 flex flex-col justify-between p-12 relative z-10 border-r border-black/10 dark:border-white/10 bg-white/60 dark:bg-[#0d0d14]/55 backdrop-blur-md transition-colors duration-300"
       >
-        <Link href="/" className="inline-flex items-center gap-2.5 w-fit">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-[0_4px_16px_rgba(255,202,40,0.2)]" style={{ background: "linear-gradient(135deg, #f59e0b, #ffca28)" }}>
-            <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 16L20 24L12 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M24 32H36" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
+        <Link href="/" className="inline-flex items-center gap-3 w-fit group">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-white/90 shadow-[0_4px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] overflow-hidden transition-transform group-hover:scale-105">
+            <img src="/vision-logo.png" alt="VISION logo" className="w-8 h-8 object-contain mix-blend-multiply" />
           </div>
-          <span className="text-[1.1rem] font-bold tracking-[-0.02em]">Vision AI</span>
+          <span className="text-[1.2rem] font-bold tracking-[-0.03em] uppercase" style={{ fontFamily: 'var(--font-vision)' }}>VISION</span>
         </Link>
 
         <div className="relative z-[1]">
@@ -136,7 +133,7 @@ export default function TutorAuthPage() {
             {mode === "login" ? "Tutor Sign In" : "Register as Tutor"}
           </h2>
           <p className="text-[0.9rem] text-muted-foreground">
-            {mode === "login" ? "Access your cognitive dashboard" : "Create your tutor account"}
+            {mode === "login" ? "Access your cognitive dashboard" : "Create your VISION tutor account"}
           </p>
         </div>
 

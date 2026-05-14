@@ -52,36 +52,56 @@ export default function HeroSection() {
           {/* App icon */}
           <motion.div
             id="hero-icon"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0, ease }}
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ 
+              opacity: 1, 
+              y: [40, 0], 
+              scale: 1,
+            }}
+            transition={{ 
+              duration: 0.8, 
+              ease: [0.16, 1, 0.3, 1], // Custom ultra-smooth ease
+            }}
             className="relative w-[100px] h-[100px] flex items-center justify-center mb-8 group"
           >
-            {/* Ambient glow that blends with the plasma background */}
-            <div className="absolute inset-0 bg-white dark:bg-white/5 rounded-[2.5rem] blur-2xl opacity-40 dark:opacity-10 scale-110" />
-            
-            <div className="relative w-[88px] h-[88px] rounded-3xl flex items-center justify-center overflow-hidden
-              bg-white dark:bg-white/95
-              shadow-[0_8px_30px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)]
-              dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_20_40px_rgba(0,0,0,0.4)]"
-              style={{
-                maskImage: "radial-gradient(circle at center, black 55%, transparent 100%)",
-                WebkitMaskImage: "radial-gradient(circle at center, black 55%, transparent 100%)",
+            {/* Continuous subtle float for "actual motion" feel */}
+            <motion.div
+              animate={{
+                y: [0, -8, 0],
               }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="relative w-full h-full flex items-center justify-center"
             >
-              <img
-                src="/vision-logo.png"
-                alt="VISION logo"
-                className="w-[72px] h-[72px] object-contain mix-blend-multiply"
-              />
-            </div>
+              {/* Ambient glow */}
+              <div className="absolute inset-0 bg-white dark:bg-white/5 rounded-[2.5rem] blur-2xl opacity-40 dark:opacity-10 scale-110" />
+              
+              <div className="relative w-[88px] h-[88px] rounded-3xl flex items-center justify-center overflow-hidden
+                bg-white dark:bg-white/95
+                shadow-[0_8px_30px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)]
+                dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_20_40px_rgba(0,0,0,0.4)] transition-transform group-hover:scale-105"
+                style={{
+                  maskImage: "radial-gradient(circle at center, black 55%, transparent 100%)",
+                  WebkitMaskImage: "radial-gradient(circle at center, black 55%, transparent 100%)",
+                }}
+              >
+                <img
+                  src="/vision-logo.png"
+                  alt="VISION logo"
+                  className="w-[72px] h-[72px] object-contain mix-blend-multiply"
+                />
+              </div>
+            </motion.div>
           </motion.div>
 
           <motion.h1
             id="hero-title"
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.07, ease }}
+            transition={{ duration: 0.8, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="font-extrabold tracking-[-0.04em] leading-none mb-5 text-[var(--foreground)]"
             style={{ fontSize: "clamp(3.5rem, 8vw, 5.5rem)", fontFamily: 'var(--font-vision)', letterSpacing: '0.02em' }}
           >
@@ -90,9 +110,9 @@ export default function HeroSection() {
 
           <motion.p
             id="hero-subtitle"
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.14, ease }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="text-[1.2rem] font-normal text-[var(--muted-foreground)] leading-[1.6] max-w-[520px] mb-8"
           >
             A cognitive learning agent that helps you learn and grow with AI — personalised to you.

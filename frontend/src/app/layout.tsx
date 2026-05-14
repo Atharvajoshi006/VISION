@@ -21,13 +21,13 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vision AI – Hyper-Personalized Cognitive Learning Platform",
+  title: "VISION – Hyper-Personalized Cognitive Learning Platform",
   description:
-    "Vision AI is a coding-agent-inspired cognitive learning platform that helps you learn smarter, faster, and deeper — powered by adaptive AI.",
-  keywords: ["AI learning", "adaptive education", "cognitive learning", "Vision AI"],
-  authors: [{ name: "Vision AI" }],
+    "VISION is a coding-agent-inspired cognitive learning platform that helps you learn smarter, faster, and deeper — powered by adaptive AI.",
+  keywords: ["AI learning", "adaptive education", "cognitive learning", "VISION"],
+  authors: [{ name: "VISION" }],
   openGraph: {
-    title: "Vision AI – Hyper-Personalized Cognitive Learning",
+    title: "VISION – Hyper-Personalized Cognitive Learning",
     description: "Learn smarter, faster, and deeper — powered by adaptive AI.",
     type: "website",
   },

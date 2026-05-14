@@ -90,7 +90,7 @@ export default function StudentOnboarding() {
               <Sparkles size={24} color="#fff" />
             </div>
             <h2 className="text-3xl font-black mb-3 tracking-[-0.03em]">Set learning intensity</h2>
-            <p className="text-muted-foreground mb-8 leading-relaxed">How aggressively should Vision AI pace your learning modules?</p>
+            <p className="text-muted-foreground mb-8 leading-relaxed">How aggressively should VISION pace your learning modules?</p>
             
             <div className="grid gap-4">
               {[

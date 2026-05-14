@@ -1,17 +1,14 @@
 """
-Vision AI — Abstract Base Model
-All models inherit from this to get UUID PKs, timestamps, and soft-delete support.
+VISION Platform — Base Models
+Shared abstract models used across all intelligence modules.
 """
 import uuid
-
 from django.db import models
+from django.utils import timezone
 
 
 class TimeStampedModel(models.Model):
-    """
-    Abstract base providing created_at and updated_at timestamps.
-    Automatically managed — never set manually.
-    """
+    """Abstract base: created_at / updated_at timestamps."""
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -20,66 +17,54 @@ class TimeStampedModel(models.Model):
 
 
 class UUIDModel(models.Model):
-    """
-    Abstract base providing a UUID primary key.
-    Avoids sequential integer PKs that leak record counts to clients.
-    """
+    """Abstract base: UUID primary key."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     class Meta:
         abstract = True
 
 
-class BaseModel(UUIDModel, TimeStampedModel):
-    """
-    Standard base model for all Vision entities.
-    Combines UUID PK + automatic timestamps.
-    """
+class VisionBaseModel(UUIDModel, TimeStampedModel):
+    """Combined base model for all Vision entities."""
+
     class Meta:
         abstract = True
 
 
 class SoftDeleteManager(models.Manager):
-    """Returns only non-deleted records by default."""
+    """Manager that excludes soft-deleted records by default."""
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_deleted=False)
+        return super().get_queryset().filter(deleted_at__isnull=True)
 
-    def with_deleted(self):
+    def including_deleted(self):
         return super().get_queryset()
 
-    def deleted_only(self):
-        return super().get_queryset().filter(is_deleted=True)
+    def only_deleted(self):
+        return super().get_queryset().filter(deleted_at__isnull=False)
 
 
-class SoftDeleteModel(BaseModel):
-    """
-    Extends BaseModel with soft-delete capability.
-    Records are never physically deleted — is_deleted flag is set instead.
-    Useful for audit trails and data recovery.
-    """
-    is_deleted = models.BooleanField(default=False, db_index=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+class SoftDeleteModel(VisionBaseModel):
+    """Abstract base with soft-delete capability."""
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     objects = SoftDeleteManager()
-    all_objects = models.Manager()  # Bypass soft-delete filter when needed
+    all_objects = models.Manager()
+
+    def delete(self, using=None, keep_parents=False):
+        self.deleted_at = timezone.now()
+        self.save(update_fields=["deleted_at"])
+
+    def hard_delete(self, using=None, keep_parents=False):
+        super().delete(using=using, keep_parents=keep_parents)
+
+    def restore(self):
+        self.deleted_at = None
+        self.save(update_fields=["deleted_at"])
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
 
     class Meta:
         abstract = True
-
-    def delete(self, using=None, keep_parents=False):
-        """Override delete to perform soft delete."""
-        from django.utils import timezone
-        self.is_deleted = True
-        self.deleted_at = timezone.now()
-        self.save(update_fields=["is_deleted", "deleted_at"])
-
-    def hard_delete(self):
-        """Physical delete — admin use only."""
-        super().delete()
-
-    def restore(self):
-        """Restore a soft-deleted record."""
-        self.is_deleted = False
-        self.deleted_at = None
-        self.save(update_fields=["is_deleted", "deleted_at"])

@@ -1,1 +1,3 @@
-# core package
+"""
+VISION Platform — Core Module Init
+"""

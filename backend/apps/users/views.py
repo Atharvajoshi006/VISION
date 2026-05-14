@@ -1,81 +1,98 @@
-# backend/apps/users/views.py
-from rest_framework import viewsets, mixins, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+"""
+VISION Platform — User Views
+"""
+from rest_framework import generics, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
+from django.contrib.auth import update_session_auth_hash
 
-from .models import User
-from .serializers import UserSerializer, RegisterSerializer, LoginSerializer
-
-
-# ----------------------------------------------------------------------
-# Register (public)
-# ----------------------------------------------------------------------
-class RegisterViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    serializer_class = RegisterSerializer
-    permission_classes = (AllowAny,)
-
-
-# ----------------------------------------------------------------------
-# Login – returns JWT pair
-# ----------------------------------------------------------------------
-class LoginViewSet(viewsets.GenericViewSet):
-    serializer_class = LoginSerializer
-    permission_classes = (AllowAny,)
-
-    @action(detail=False, methods=["POST"])
-    def obtain_token(self, request):
-        ser = self.get_serializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        user = ser.validated_data["user"]
-        from rest_framework_simplejwt.tokens import RefreshToken
-
-        refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-                "user": UserSerializer(user).data,
-            }
-        )
+from apps.users.models import User, StudentProfile, TutorProfile
+from apps.users.serializers import (
+    UserDetailSerializer, UserUpdateSerializer,
+    StudentProfileSerializer, TutorProfileSerializer,
+    ChangePasswordSerializer, UserSerializer,
+)
+from core.permissions import IsAdmin, IsOwnerOrAdmin
 
 
-# ----------------------------------------------------------------------
-# “Me” endpoint – returns the currently‑authenticated user
-# ----------------------------------------------------------------------
-class MeViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
-):
-    """
-    GET /api/users/me/
-    PATCH /api/users/me/
-    """
-    permission_classes = (IsAuthenticated,)
-    serializer_class = UserSerializer
+class CurrentUserView(generics.RetrieveUpdateAPIView):
+    """GET/PATCH /api/v1/users/me/ — current user's own profile."""
+    permission_classes = [permissions.IsAuthenticated]
 
-    # drf‑yasg expects a ``queryset`` attribute; a dummy one is enough.
-    queryset = User.objects.none()
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return UserUpdateSerializer
+        return UserDetailSerializer
 
-    def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return User.objects.none()
-        return User.objects.filter(pk=self.request.user.pk)
-
-    # The object we always return is the logged‑in user.
     def get_object(self):
         return self.request.user
 
-    @action(detail=False, methods=["POST"])
-    def change_password(self, request):
-        old = request.data.get("old_password")
-        new = request.data.get("new_password")
-        if not request.user.check_password(old):
-            return Response(
-                {"old_password": ["Wrong password."]},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        request.user.set_password(new)
-        request.user.save()
-        return Response({"detail": "Password changed successfully."})
+    def update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    """POST /api/v1/users/me/change-password/"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        user.set_password(serializer.validated_data["new_password"])
+        user.save()
+        return Response({"success": True, "message": "Password updated successfully."})
+
+
+class StudentProfileView(generics.RetrieveUpdateAPIView):
+    """GET/PATCH /api/v1/users/me/student-profile/"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = StudentProfileSerializer
+
+    def get_object(self):
+        profile, _ = StudentProfile.objects.get_or_create(user=self.request.user)
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
+
+
+class TutorProfileView(generics.RetrieveUpdateAPIView):
+    """GET/PATCH /api/v1/users/me/tutor-profile/"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TutorProfileSerializer
+
+    def get_object(self):
+        profile, _ = TutorProfile.objects.get_or_create(user=self.request.user)
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
+
+
+class AdminUserListView(generics.ListAPIView):
+    """GET /api/v1/users/ — Admin: list all users."""
+    permission_classes = [IsAdmin]
+    serializer_class = UserSerializer
+    filterset_fields = ["role", "is_active"]
+    search_fields = ["email", "first_name", "last_name"]
+    ordering_fields = ["date_joined", "last_seen"]
+
+    def get_queryset(self):
+        return User.objects.all().select_related(
+            "student_profile", "tutor_profile"
+        ).order_by("-date_joined")
+
+
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """GET/PATCH/DELETE /api/v1/users/<id>/ — Admin management."""
+    permission_classes = [IsAdmin]
+    serializer_class = UserDetailSerializer
+    queryset = User.objects.all()

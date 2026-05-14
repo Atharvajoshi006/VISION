@@ -1,67 +1,142 @@
-from rest_framework import viewsets, mixins, status
+"""
+VISION Platform — Course Views
+"""
+from rest_framework import generics, viewsets, permissions, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
-from .models import Course, Lesson, Content
-from .serializers import CourseSerializer, LessonSerializer, ContentSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+
+from apps.courses.models import (
+    Concept, Course, Lesson, Enrollment, Quiz, QuizAttempt, Project
+)
+from apps.courses.serializers import (
+    ConceptSerializer, CourseListSerializer, CourseDetailSerializer,
+    LessonSerializer, EnrollmentSerializer, QuizSerializer,
+    QuizAttemptSerializer, ProjectSerializer,
+)
+from core.permissions import IsTutor, IsTutorOrAdmin, IsStudent, IsCourseTutor
 
 
-class CourseViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    GET /api/courses/
-    """
-    queryset = Course.objects.filter(is_active=True).prefetch_related("modules", "skills")
-    serializer_class = CourseSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+class ConceptViewSet(viewsets.ModelViewSet):
+    """CRUD for Concepts — Tutor/Admin only for write."""
+    queryset = Concept.objects.all()
+    serializer_class = ConceptSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["domain", "difficulty_level"]
+    search_fields = ["name", "domain"]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.IsAuthenticated()]
+        return [IsTutorOrAdmin()]
 
 
-class LessonViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    GET /api/lessons/
-    POST /api/lessons/<id>/start/
-    POST /api/lessons/<id>/complete/
-    """
-    queryset = Lesson.objects.select_related("module__course").prefetch_related(
-        "contents", "skills", "assessment__questions"
-    )
-    serializer_class = LessonSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+class CourseViewSet(viewsets.ModelViewSet):
+    """Course CRUD. Tutors create; students read."""
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["difficulty", "is_published"]
+    search_fields = ["title", "description"]
 
-    @action(detail=True, methods=["POST"], permission_classes=[IsAuthenticated])
-    def start(self, request, pk=None):
-        lesson = self.get_object()
-        # simple start: create a progress row with status=1
-        from apps.progress_tracking.models import LessonProgress
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "student":
+            return Course.objects.filter(is_published=True).prefetch_related("concepts", "lessons")
+        elif user.role == "tutor":
+            return Course.objects.filter(tutor=user).prefetch_related("concepts", "lessons")
+        return Course.objects.all().prefetch_related("concepts", "lessons")
 
-        progress, created = LessonProgress.objects.get_or_create(
-            user=request.user,
-            lesson=lesson,
-            defaults={"status": LessonProgress.Status.IN_PROGRESS},
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CourseListSerializer
+        return CourseDetailSerializer
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.IsAuthenticated()]
+        if self.action == "create":
+            return [IsTutor()]
+        return [IsCourseTutor()]
+
+    def perform_create(self, serializer):
+        serializer.save(tutor=self.request.user)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsStudent])
+    def enroll(self, request, pk=None):
+        """POST /api/v1/courses/<id>/enroll/ — enroll current student."""
+        course = self.get_object()
+        enrollment, created = Enrollment.objects.get_or_create(
+            student=request.user, course=course
         )
         if not created:
-            progress.status = LessonProgress.Status.IN_PROGRESS
-            progress.save(update_fields=["status"])
-        return Response({"detail": "Lesson started."}, status=status.HTTP_200_OK)
+            return Response(
+                {"success": False, "message": "Already enrolled."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        course.enrolled_count += 1
+        course.save(update_fields=["enrolled_count"])
+        return Response(
+            {"success": True, "message": f"Enrolled in {course.title}.", "data": EnrollmentSerializer(enrollment).data},
+            status=status.HTTP_201_CREATED,
+        )
 
-    @action(detail=True, methods=["POST"], permission_classes=[IsAuthenticated])
-    def complete(self, request, pk=None):
-        lesson = self.get_object()
-        from apps.progress_tracking.models import LessonProgress
 
-        progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
-        progress.status = LessonProgress.Status.COMPLETED
-        progress.completion_ratio = 1.0
-        progress.save(update_fields=["status", "completion_ratio"])
+class LessonViewSet(viewsets.ModelViewSet):
+    """Lesson CRUD within a course."""
+    serializer_class = LessonSerializer
 
-        # Fire the mastery‑boost Celery task (see tasks)
-        from apps.progress_tracking.tasks import boost_mastery_task
+    def get_queryset(self):
+        return Lesson.objects.filter(course_id=self.kwargs.get("course_pk"))
 
-        boost_mastery_task.delay(request.user.id, lesson.id)
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.IsAuthenticated()]
+        return [IsTutorOrAdmin()]
 
-        return Response({"detail": "Lesson marked as completed."}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["GET"], permission_classes=[IsAuthenticated])
-    def content(self, request, pk=None):
-        lesson = self.get_object()
-        serializer = ContentSerializer(lesson.contents.all(), many=True)
-        return Response(serializer.data)
+class EnrollmentListView(generics.ListAPIView):
+    """GET /api/v1/courses/my-enrollments/ — student's enrollments."""
+    serializer_class = EnrollmentSerializer
+    permission_classes = [IsStudent]
+
+    def get_queryset(self):
+        return Enrollment.objects.filter(
+            student=self.request.user, is_active=True
+        ).select_related("course")
+
+
+class QuizViewSet(viewsets.ModelViewSet):
+    """Quiz CRUD."""
+    serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        return Quiz.objects.prefetch_related("questions")
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.IsAuthenticated()]
+        return [IsTutorOrAdmin()]
+
+
+class QuizAttemptCreateView(generics.CreateAPIView):
+    """POST /api/v1/courses/quiz-attempts/ — submit a quiz attempt."""
+    serializer_class = QuizAttemptSerializer
+    permission_classes = [IsStudent]
+
+    def perform_create(self, serializer):
+        attempt = serializer.save(student=self.request.user)
+        # Trigger behavioral tracking asynchronously
+        from apps.tracking.tasks import process_quiz_attempt_event
+        process_quiz_attempt_event.delay(str(attempt.id))
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    """Project CRUD."""
+    serializer_class = ProjectSerializer
+
+    def get_queryset(self):
+        return Project.objects.prefetch_related("concepts")
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.IsAuthenticated()]
+        return [IsTutorOrAdmin()]

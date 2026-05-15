@@ -3,29 +3,30 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer
-      className="border-t border-black/8 dark:border-white/6"
-      style={{ background: "#fafafa", padding: "4rem 4rem 2rem" }}
+      className="border-t border-border bg-background relative overflow-hidden"
+      style={{ padding: "8rem 4rem 4rem" }}
     >
-      <style>{`body.dark footer { background: #0a0a10 !important; }`}</style>
-      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between gap-16 pb-12">
+      {/* Decorative glow */}
+      <div className="absolute bottom-0 right-0 w-[40%] h-[60%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+      
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between gap-16 pb-20 relative z-10">
         {/* Brand */}
-        <div>
-          <div className="text-[1.1rem] font-bold tracking-[-0.02em] text-[var(--foreground)] mb-3 uppercase" style={{ fontFamily: 'var(--font-vision)' }}>VISION</div>
-          <p className="text-[0.875rem] text-[var(--muted-foreground)] leading-[1.7]">
-            Hyper-Personalized Cognitive Learning.<br />Built for the minds of tomorrow.
+        <div className="max-w-sm">
+          <div className="text-2xl font-black tracking-tight text-foreground mb-4 uppercase" style={{ fontFamily: 'var(--font-vision)' }}>VISION</div>
+          <p className="text-base text-muted-foreground leading-relaxed">
+            Hyper-Personalized Cognitive Learning ecosystem. Built with neural metrics to empower the minds of tomorrow.
           </p>
         </div>
 
         {/* Links */}
-        <div className="flex gap-16 flex-wrap">
+        <div className="flex gap-20 flex-wrap">
           {[
             {
               title: "Platform",
               links: [
-                { href: "/auth/student", label: "For Students" },
-                { href: "/auth/tutor",   label: "For Tutors" },
-                { href: "#",             label: "Analytics" },
-                { href: "#",             label: "AI Tutor" },
+                { href: "/auth", label: "Neural Access" },
+                { href: "/#features",   label: "Core Modules" },
+                { href: "/#research",   label: "Research" },
               ],
             },
             {

@@ -16,6 +16,7 @@ export interface CourseItem {
   duration: string;
   progress?: number; // 0–100, only for in-progress courses
   tags?: string[];
+  video_url?: string;
 }
 
 export interface CourseRow {
@@ -68,7 +69,9 @@ export interface FeaturedCourse {
 
 // ─── Static fallback data (replace with API responses) ─────────────────────
 
-export const FEATURED_COURSE: FeaturedCourse = {
+// ─── Neural Catalog (Master Content Library) ─────────────────────
+
+export const MASTER_FEATURED: FeaturedCourse = {
   id: "quantum-mechanics-adv",
   title: "Advanced Quantum Mechanics",
   match: "98% Match",
@@ -79,43 +82,16 @@ export const FEATURED_COURSE: FeaturedCourse = {
   img: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2000&auto=format&fit=crop",
 };
 
-export const COURSE_ROWS: CourseRow[] = [
-  {
-    id: "continue-learning",
-    title: "Continue Learning",
-    hasMore: true,
-    items: [
-      { id: "c1", title: "Calculus III: Vector Analysis", progress: 75, duration: "45 min left", match: "94%", img: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800&auto=format&fit=crop", tags: ["Math", "Advanced"] },
-      { id: "c2", title: "Machine Learning Foundations", progress: 30, duration: "2h 10m left", match: "88%", img: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop", tags: ["CS", "AI"] },
-      { id: "c3", title: "Neuroscience 101", progress: 12, duration: "3h 20m left", match: "79%", img: "https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=800&auto=format&fit=crop", tags: ["Biology"] },
-      { id: "c4", title: "Linear Algebra", progress: 55, duration: "1h 30m left", match: "91%", img: "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=800&auto=format&fit=crop", tags: ["Math"] },
-      { id: "c5", title: "Quantum Computing Basics", progress: 8, duration: "5h left", match: "87%", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop", tags: ["Physics", "CS"] },
-    ],
-  },
-  {
-    id: "trending",
-    title: "Trending in your cohort",
-    hasMore: true,
-    items: [
-      { id: "t1", title: "Data Structures & Algorithms", duration: "6h total", match: "91%", img: "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=800&auto=format&fit=crop", tags: ["CS"] },
-      { id: "t2", title: "Behavioral Economics", duration: "4h total", match: "85%", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=800&auto=format&fit=crop", tags: ["Economics"] },
-      { id: "t3", title: "Organic Chemistry", duration: "8h total", match: "76%", img: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop", tags: ["Chemistry"] },
-      { id: "t4", title: "World History: 20th Century", duration: "5h total", match: "82%", img: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=800&auto=format&fit=crop", tags: ["History"] },
-      { id: "t5", title: "Introduction to Philosophy", duration: "3h total", match: "78%", img: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?q=80&w=800&auto=format&fit=crop", tags: ["Philosophy"] },
-    ],
-  },
-  {
-    id: "cognitive-profile",
-    title: "Based on your Cognitive Profile",
-    hasMore: true,
-    items: [
-      { id: "p1", title: "Abstract Algebra", duration: "7h total", match: "96%", img: "https://images.unsplash.com/photo-1632516643720-e7f5d7d6eba1?q=80&w=800&auto=format&fit=crop", tags: ["Math"] },
-      { id: "p2", title: "Philosophy of Mind", duration: "3h total", match: "89%", img: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?q=80&w=800&auto=format&fit=crop", tags: ["Philosophy"] },
-      { id: "p3", title: "Astrophysics", duration: "9h total", match: "92%", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop", tags: ["Physics"] },
-      { id: "p4", title: "Genetics & Evolution", duration: "5h total", match: "83%", img: "https://images.unsplash.com/photo-1530213786676-4189f1756947?q=80&w=800&auto=format&fit=crop", tags: ["Biology"] },
-      { id: "p5", title: "Topology", duration: "6h total", match: "88%", img: "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=800&auto=format&fit=crop", tags: ["Math"] },
-    ],
-  },
+export const NEURAL_CATALOG: CourseItem[] = [
+  { id: "c1", title: "Calculus III: Vector Analysis", duration: "45 min", match: "94%", img: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800&auto=format&fit=crop", tags: ["Math", "Advanced"] },
+  { id: "c2", title: "Machine Learning Foundations", duration: "2h 10m", match: "88%", img: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop", tags: ["CS", "AI"] },
+  { id: "c3", title: "Neuroscience 101", duration: "3h 20m", match: "79%", img: "https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=800&auto=format&fit=crop", tags: ["Biology"] },
+  { id: "c4", title: "Linear Algebra", duration: "1h 30m", match: "91%", img: "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=800&auto=format&fit=crop", tags: ["Math"] },
+  { id: "c5", title: "Quantum Computing Basics", duration: "5h", match: "87%", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop", tags: ["Physics", "CS"] },
+  { id: "t1", title: "Data Structures & Algorithms", duration: "6h", match: "91%", img: "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=800&auto=format&fit=crop", tags: ["CS"] },
+  { id: "p1", title: "Abstract Algebra", duration: "7h", match: "96%", img: "https://images.unsplash.com/photo-1632516643720-e7f5d7d6eba1?q=80&w=800&auto=format&fit=crop", tags: ["Math"] },
+  { id: "p3", title: "Astrophysics", duration: "9h", match: "92%", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=800&auto=format&fit=crop", tags: ["Physics"] },
+  { id: "p4", title: "Genetics & Evolution", duration: "5h", match: "83%", img: "https://images.unsplash.com/photo-1530213786676-4189f1756947?q=80&w=800&auto=format&fit=crop", tags: ["Biology"] },
 ];
 
 export const RECOMMENDED_BOOKS: BookItem[] = [

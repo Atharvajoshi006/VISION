@@ -18,61 +18,93 @@ const MOCK_USERS = [
   { email: "tutor@vision.ai", role: "tutor", name: "Demo Tutor" },
 ];
 
+import { supabase, signInWithGoogle } from "@/lib/supabase";
+
 export default function UnifiedAuthPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const router = useRouter();
   const setProfile = useUserStore(state => state.setProfile);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      console.error("Google Auth Error:", error.message);
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    setTimeout(() => {
-      const knownUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
-      let detectedRole: "student" | "tutor" = "student";
-      let nameValue = "New User";
+    // Check if it's a mock user first
+    const knownUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (knownUser) {
+      // Mock login simulation
+      setTimeout(() => {
+        setProfile({ 
+          email, 
+          role: knownUser.role.charAt(0).toUpperCase() + knownUser.role.slice(1),
+          name: knownUser.name
+        });
+        router.push(`/onboarding/${knownUser.role}`);
+      }, 1000);
+      return;
+    }
 
-      // Get name from input if in signup mode (simulated)
-      const nameInput = (document.querySelector('input[placeholder="Identity string"]') as HTMLInputElement)?.value || "";
-      if (nameInput) nameValue = nameInput;
-
-      if (knownUser) {
-        detectedRole = knownUser.role as "student" | "tutor";
-        nameValue = knownUser.name;
-      } else {
-        // --- SMART NEURAL INFERENCE ---
+    // REAL AUTH with Supabase
+    try {
+      if (mode === "signup") {
+        // Smart Role Inference
+        const nameLower = fullName.toLowerCase();
         const emailLower = email.toLowerCase();
-        const nameLower = nameValue.toLowerCase();
-        
-        // 1. Name-based titles
-        const tutorTitles = ["dr.", "dr ", "prof.", "prof ", "instructor", "teacher", "dean", "chancellor"];
-        const hasTutorTitle = tutorTitles.some(t => nameLower.includes(t));
+        const tutorTitles = ["dr.", "dr ", "prof.", "prof ", "instructor", "teacher", "mentor"];
+        const isTutor = tutorTitles.some(t => nameLower.includes(t)) || emailLower.includes("tutor") || emailLower.includes("prof");
+        const detectedRole = isTutor ? "tutor" : "student";
 
-        // 2. Email pattern matching
-        const tutorEmailPatterns = ["prof", "tutor", "teach", "instructor", "faculty", "mentor", "staff"];
-        const hasTutorEmailPattern = tutorEmailPatterns.some(p => emailLower.includes(p));
-        
-        // 3. Domain reputation (simulation)
-        const isProfessionalDomain = emailLower.endsWith(".edu.pro") || 
-                                   emailLower.endsWith(".ac.uk") || 
-                                   emailLower.endsWith(".edu.in") ||
-                                   emailLower.includes(".gov.");
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              role: detectedRole
+            }
+          }
+        });
 
-        // Identify as Tutor if any professional marker is found
-        detectedRole = (hasTutorTitle || hasTutorEmailPattern || isProfessionalDomain) ? "tutor" : "student";
+        if (error) throw error;
+        
+        setProfile({ email, role: detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1), name: fullName });
+        router.push(`/onboarding/${detectedRole}`);
+      } else {
+        // Login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+        
+        // Fetch profile to get role and name
+        const { data: dbProfile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+        const finalRole = dbProfile?.role || data.user.user_metadata?.role || "student";
+        const finalName = dbProfile?.name || data.user.user_metadata?.full_name || "User";
+        
+        setProfile({ email, role: finalRole.charAt(0).toUpperCase() + finalRole.slice(1), name: finalName });
+        router.push(`/dashboard/${finalRole}`);
       }
-
-      setProfile({ 
-        email, 
-        role: detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1),
-        name: nameValue
-      });
-
-      router.push(`/onboarding/${detectedRole}`);
-    }, 1500);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -145,6 +177,20 @@ export default function UnifiedAuthPage() {
           </p>
         </div>
 
+        <button 
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+          className="w-full py-3 mb-6 rounded-xl border border-border bg-card flex items-center justify-center gap-3 text-[0.9rem] font-semibold hover:bg-white/5 transition-all group"
+        >
+          <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          {isLoading ? "Synchronizing..." : "Neural Sync with Google"}
+        </button>
+
+        <div className="relative mb-8 text-center">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
+          <span className="relative px-4 bg-white dark:bg-[#0a0a12] text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground/50">Neural Path</span>
+        </div>
+
         <div className="flex border-b border-black/10 dark:border-white/10 mb-7 transition-colors">
           {(["login", "signup"] as Mode[]).map((tab) => (
             <button
@@ -162,12 +208,19 @@ export default function UnifiedAuthPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
           <AnimatePresence mode="wait">
             {mode === "signup" && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="flex flex-col gap-3.5 overflow-hidden">
+              <div className="flex flex-col gap-3.5 mb-3.5 transition-all">
                 <div>
                   <label className="block text-[0.68rem] tracking-[0.1em] uppercase mb-1.5 text-muted-foreground" style={{ fontFamily: "var(--font-jetbrains, monospace)" }}>Full Name</label>
-                  <input required type="text" placeholder="Identity string" className="w-full rounded-xl px-4 py-3.5 text-foreground bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[0.95rem] outline-none transition-all focus:border-primary focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)]" />
+                  <input 
+                    required 
+                    type="text" 
+                    placeholder="Identity string" 
+                    value={fullName} 
+                    onChange={(e) => setFullName(e.target.value)} 
+                    className="w-full rounded-xl px-4 py-3.5 text-foreground bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[0.95rem] outline-none transition-all focus:border-primary focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)]" 
+                  />
                 </div>
-              </motion.div>
+              </div>
             )}
           </AnimatePresence>
 
@@ -178,7 +231,7 @@ export default function UnifiedAuthPage() {
 
           <div>
             <label className="block text-[0.68rem] tracking-[0.1em] uppercase mb-1.5 text-muted-foreground" style={{ fontFamily: "var(--font-jetbrains, monospace)" }}>Access Token (Password)</label>
-            <input required type="password" placeholder="••••••••" className="w-full rounded-xl px-4 py-3.5 text-foreground bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[0.95rem] outline-none transition-all focus:border-primary focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)]" />
+            <input required type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl px-4 py-3.5 text-foreground bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[0.95rem] outline-none transition-all focus:border-primary focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)]" />
           </div>
 
           <button type="submit" disabled={isLoading} className="w-full py-3.5 mt-2 text-[0.95rem] font-bold tracking-[-0.01em] rounded-full border-none cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(167,139,250,0.5)]" style={{ background: "linear-gradient(135deg, #7c3aed, #6366f1)", color: "#fff", opacity: isLoading ? 0.7 : 1 }}>

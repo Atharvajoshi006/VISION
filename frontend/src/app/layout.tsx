@@ -35,6 +35,8 @@ export const metadata: Metadata = {
 
 const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
+import TelemetryTracker from "@/components/dashboard/telemetry-tracker";
+
 export default function RootLayout({
   children,
 }: {
@@ -49,6 +51,7 @@ export default function RootLayout({
       <body className={GeistSans.className}>
         <div className="noise-overlay" />
         <ScrollProgress />
+        <TelemetryTracker />
         <ThemeProvider>
           {children}
           <ToastContainer />

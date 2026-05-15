@@ -7,16 +7,61 @@ import { BookOpen, Users, Clock, Zap } from "lucide-react";
 import PlasmaCanvas from "@/components/hero/plasma-canvas";
 import ThemeToggle from "@/components/theme-toggle";
 
+import { useUserStore } from "@/store/use-user-store";
+import { supabase, saveOnboardingData } from "@/lib/supabase";
+
 export default function TutorOnboarding() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [responses, setResponses] = useState<any>({ subjects: [] });
+  
+  const { profile, setProfile } = useUserStore();
 
-  const handleNext = () => {
+  const handleOptionChange = (name: string, value: any, multi = false) => {
+    if (multi) {
+      const current = responses[name] || [];
+      const next = current.includes(value) 
+        ? current.filter((v: string) => v !== value)
+        : [...current, value];
+      setResponses((prev: any) => ({ ...prev, [name]: next }));
+    } else {
+      setResponses((prev: any) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleNext = async () => {
     if (step < 3) setStep(step + 1);
     else {
       setIsFinishing(true);
-      setTimeout(() => router.push("/dashboard/tutor"), 1000);
+      
+      const profileUpdate = {
+        role: "tutor",
+        onboarding_data: responses,
+        onboarding_completed: true,
+        bio: `Professional educator specializing in ${responses.subjects?.join(", ")}. Focusing on ${responses.cohort} cohorts.`
+      };
+
+      // Save to Global Store
+      setProfile(profileUpdate);
+      
+      // Save to Supabase (Use actual UUID from session)
+      try {
+        console.log("[ONBOARDING] Initiating neural sync with Supabase...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { error } = await saveOnboardingData(session.user.id, profileUpdate);
+          if (error) throw error;
+          console.log("[ONBOARDING] Neural sync successful!");
+        }
+      } catch (err: any) {
+        console.error("[ONBOARDING] Sync error:", err.message);
+      }
+
+      setTimeout(() => {
+        console.log("[ONBOARDING] Redirecting to dashboard...");
+        router.push("/dashboard/tutor");
+      }, 1000);
     }
   };
 
@@ -94,12 +139,20 @@ export default function TutorOnboarding() {
                 <p className="text-muted-foreground mb-8 leading-relaxed">What disciplines will you be instructing in the VISION network?</p>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  {["Computer Science", "Mathematics", "Physics", "Biology", "Economics", "Literature"].map(subject => (
-                    <label key={subject} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
-                      <input type="checkbox" className="mr-3 accent-[#ffca28] w-4 h-4 rounded" />
-                      <span className="font-medium text-sm group-hover:text-foreground transition-colors">{subject}</span>
-                    </label>
-                  ))}
+                  {["Computer Science", "Mathematics", "Physics", "Biology", "Economics", "Literature"].map(subject => {
+                    const isChecked = responses.subjects?.includes(subject);
+                    return (
+                      <label key={subject} className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border ${isChecked ? 'border-amber-500 bg-amber-500/10' : 'border-transparent bg-black/5 dark:bg-white/[0.02]'} hover:border-amber-500/30 group`}>
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => handleOptionChange("subjects", subject, true)}
+                          className="mr-3 accent-[#ffca28] w-4 h-4 rounded" 
+                        />
+                        <span className={`font-medium text-sm transition-colors ${isChecked ? 'text-foreground' : 'text-muted-foreground'}`}>{subject}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -113,12 +166,21 @@ export default function TutorOnboarding() {
                 <p className="text-muted-foreground mb-8 leading-relaxed">Select the primary academic level of your students.</p>
                 
                 <div className="grid gap-3">
-                  {["High School", "Undergraduate", "Postgraduate", "Professional / Continuing"].map(level => (
-                    <label key={level} className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/10 dark:hover:border-white/10 group bg-black/5 dark:bg-white/[0.02]">
-                      <input type="radio" name="level" className="mr-4 accent-[#ffca28] w-4 h-4" />
-                      <span className="font-medium group-hover:text-foreground transition-colors">{level}</span>
-                    </label>
-                  ))}
+                  {["High School", "Undergraduate", "Postgraduate", "Professional / Continuing"].map(level => {
+                    const isChecked = responses.cohort === level;
+                    return (
+                      <label key={level} className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border ${isChecked ? 'border-amber-500 bg-amber-500/10' : 'border-transparent bg-black/5 dark:bg-white/[0.02]'} hover:border-amber-500/30 group`}>
+                        <input 
+                          type="radio" 
+                          name="level" 
+                          checked={isChecked}
+                          onChange={() => handleOptionChange("cohort", level)}
+                          className="mr-4 accent-[#ffca28] w-4 h-4" 
+                        />
+                        <span className={`font-medium transition-colors ${isChecked ? 'text-foreground' : 'text-muted-foreground'}`}>{level}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -136,15 +198,24 @@ export default function TutorOnboarding() {
                     { title: "Video Lectures", desc: "Long-form cinematic educational videos." },
                     { title: "Interactive Modules", desc: "Bite-sized, highly interactive exercises." },
                     { title: "Live Mentorship", desc: "Real-time 1-on-1 or group cognitive sessions." }
-                  ].map(format => (
-                    <label key={format.title} className="flex flex-col p-5 rounded-xl cursor-pointer transition-all border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/[0.03] hover:border-[#ffca28]/50 hover:bg-[#ffca28]/5">
-                      <div className="flex items-center mb-1">
-                        <input type="radio" name="format" className="mr-3 accent-[#ffca28]" />
-                        <span className="font-bold">{format.title}</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground ml-6">{format.desc}</span>
-                    </label>
-                  ))}
+                  ].map(format => {
+                    const isChecked = responses.format === format.title;
+                    return (
+                      <label key={format.title} className={`flex flex-col p-5 rounded-xl cursor-pointer transition-all border ${isChecked ? 'border-amber-500 bg-amber-500/5' : 'border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/[0.03]'} hover:border-[#ffca28]/50`}>
+                        <div className="flex items-center mb-1">
+                          <input 
+                            type="radio" 
+                            name="format" 
+                            checked={isChecked}
+                            onChange={() => handleOptionChange("format", format.title)}
+                            className="mr-3 accent-[#ffca28]" 
+                          />
+                          <span className={`font-bold ${isChecked ? 'text-foreground' : 'text-muted-foreground'}`}>{format.title}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground ml-6">{format.desc}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}

@@ -11,16 +11,64 @@ import {
 import PlasmaCanvas from "@/components/hero/plasma-canvas";
 import ThemeToggle from "@/components/theme-toggle";
 
+import { useUserStore } from "@/store/use-user-store";
+import { supabase, saveOnboardingData } from "@/lib/supabase";
+
 export default function StudentOnboarding() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [responses, setResponses] = useState<Record<string, string>>({});
+  
+  const { profile, setProfile } = useUserStore();
 
-  const handleNext = () => {
+  const handleOptionChange = (name: string, id: string) => {
+    setResponses(prev => ({ ...prev, [name]: id }));
+  };
+
+  const handleNext = async () => {
     if (step < 4) setStep(step + 1);
     else {
       setIsFinishing(true);
-      setTimeout(() => router.push("/dashboard/student"), 2000);
+      
+      // Calculate derived cognitive level based on baseline
+      let initial_level = 1;
+      if (responses.baseline === "basics") initial_level = 3;
+      if (responses.baseline === "intermediate") initial_level = 5;
+      if (responses.baseline === "advanced") initial_level = 7;
+
+      const profileUpdate = {
+        name: profile.name,
+        role: "student",
+        cognitive_level: initial_level,
+        onboarding_completed: true,
+        onboarding_data: responses,
+        bio: `Adaptive learner focused on ${responses.goal}. Preferred logic: ${responses.modeling}.`
+      };
+
+      // Save to Global Store
+      setProfile(profileUpdate);
+
+      // Save to Supabase (Use actual UUID from session)
+      try {
+        console.log("[ONBOARDING] Initiating neural sync with Supabase...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { error } = await saveOnboardingData(session.user.id, profileUpdate);
+          if (error) throw error;
+          console.log("[ONBOARDING] Neural sync successful!");
+        } else {
+          console.warn("[ONBOARDING] No active session found. Running in local mode.");
+        }
+      } catch (err: any) {
+        console.error("[ONBOARDING] Sync error:", err.message);
+        // We continue to dashboard anyway to prevent "stuck" state
+      }
+
+      setTimeout(() => {
+        console.log("[ONBOARDING] Redirecting to dashboard...");
+        router.push("/dashboard/student");
+      }, 1000);
     }
   };
 
@@ -137,7 +185,13 @@ export default function StudentOnboarding() {
                       { id: "refresher", title: "Quick Refresher", desc: "AI prioritizes summaries and review." },
                       { id: "skills", title: "Skill Building", desc: "AI prioritizes practical application." }
                     ].map(opt => (
-                      <OptionCard key={opt.id} {...opt} name="goal" />
+                      <OptionCard 
+                        key={opt.id} 
+                        {...opt} 
+                        name="goal" 
+                        checked={responses.goal === opt.id}
+                        onChange={() => handleOptionChange("goal", opt.id)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -156,7 +210,13 @@ export default function StudentOnboarding() {
                       { id: "intermediate", title: "Intermediate", desc: "Dive straight into the core interactions." },
                       { id: "advanced", title: "Advanced", desc: "Challenge me with high-level problems immediately." }
                     ].map(opt => (
-                      <OptionCard key={opt.id} {...opt} name="baseline" />
+                      <OptionCard 
+                        key={opt.id} 
+                        {...opt} 
+                        name="baseline" 
+                        checked={responses.baseline === opt.id}
+                        onChange={() => handleOptionChange("baseline", opt.id)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -175,7 +235,13 @@ export default function StudentOnboarding() {
                       { id: "practice", title: "Hands-on Practice", desc: "Prioritize interactive tasks and labs." },
                       { id: "sprints", title: "Quick Sprints", desc: "Prioritize flashcards and rapid quizzes." }
                     ].map(opt => (
-                      <OptionCard key={opt.id} {...opt} name="flavor" />
+                      <OptionCard 
+                        key={opt.id} 
+                        {...opt} 
+                        name="flavor" 
+                        checked={responses.flavor === opt.id}
+                        onChange={() => handleOptionChange("flavor", opt.id)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -194,7 +260,13 @@ export default function StudentOnboarding() {
                       { id: "visualizer", title: "The Visual Mapper", desc: "Use flowcharts and spatial hierarchies." },
                       { id: "casestudy", title: "The Case Studier", desc: "Show a real-world result first, then the theory." }
                     ].map(opt => (
-                      <OptionCard key={opt.id} {...opt} name="modeling" />
+                      <OptionCard 
+                        key={opt.id} 
+                        {...opt} 
+                        name="modeling" 
+                        checked={responses.modeling === opt.id}
+                        onChange={() => handleOptionChange("modeling", opt.id)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -239,16 +311,16 @@ export default function StudentOnboarding() {
   );
 }
 
-function OptionCard({ id, title, desc, name }: { id: string, title: string, desc: string, name: string }) {
+function OptionCard({ id, title, desc, name, checked, onChange }: { id: string, title: string, desc: string, name: string, checked: boolean, onChange: () => void }) {
   return (
-    <label className="flex items-start p-5 rounded-2xl cursor-pointer transition-all border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] hover:border-violet-500/50 hover:bg-violet-500/[0.03] dark:hover:bg-violet-500/[0.05] group">
+    <label className={`flex items-start p-5 rounded-2xl cursor-pointer transition-all border ${checked ? 'border-violet-500 bg-violet-500/[0.05]' : 'border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]'} hover:border-violet-500/50 hover:bg-violet-500/[0.03] dark:hover:bg-violet-500/[0.05] group`}>
       <div className="mt-1 relative flex items-center justify-center">
-        <input type="radio" name={name} id={id} className="peer sr-only" />
-        <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 peer-checked:border-violet-500 peer-checked:bg-violet-500 transition-all" />
-        <CheckCircle2 size={12} className="absolute text-white scale-0 peer-checked:scale-100 transition-transform" />
+        <input type="radio" name={name} id={id} className="peer sr-only" checked={checked} onChange={onChange} />
+        <div className={`w-5 h-5 rounded-full border-2 transition-all ${checked ? 'border-violet-500 bg-violet-500' : 'border-muted-foreground/30'}`} />
+        <CheckCircle2 size={12} className={`absolute text-white transition-transform ${checked ? 'scale-100' : 'scale-0'}`} />
       </div>
       <div className="ml-4">
-        <span className="block font-bold text-base group-hover:text-foreground transition-colors leading-tight mb-0.5">{title}</span>
+        <span className={`block font-bold text-base transition-colors leading-tight mb-0.5 ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{title}</span>
         <span className="block text-xs lg:text-sm text-muted-foreground leading-snug">{desc}</span>
       </div>
     </label>

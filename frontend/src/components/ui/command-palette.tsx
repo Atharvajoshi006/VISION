@@ -15,12 +15,14 @@ const COMMANDS = [
   { id: "focus", label: "Enter Focus Mode", icon: <Zap size={16} />, action: "toast", msg: "⚡ Focus Mode activated", group: "Quick Actions" },
 ];
 
+import { useUserStore } from "@/store/use-user-store";
+
 interface CommandPaletteProps {
   onToast?: (msg: string) => void;
 }
 
 export default function CommandPalette({ onToast }: CommandPaletteProps) {
-  const [open, setOpen] = useState(false);
+  const { isCommandPaletteOpen: open, setCommandPaletteOpen: setOpen } = useUserStore();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,7 +32,7 @@ export default function CommandPalette({ onToast }: CommandPaletteProps) {
     const down = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((o) => !o);
+        setOpen(!open);
         setQuery("");
         setSelected(0);
       }

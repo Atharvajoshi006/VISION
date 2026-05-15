@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   Play, Info, Brain, Home, List, BarChart2, User,
   ChevronRight, X, Plus, Clock, Search, ChevronDown,
-  LayoutGrid, AlignJustify,
+  LayoutGrid, AlignJustify, LogOut,
 } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
 import { useUserStore } from "@/store/use-user-store";
@@ -18,8 +18,13 @@ import MyListView from "@/components/dashboard/my-list-view";
 import AnalyticsView from "@/components/dashboard/analytics-view";
 import ProfileView from "@/components/dashboard/profile-view";
 import { useToast } from "@/components/ui/toast";
-import { FEATURED_COURSE, COURSE_ROWS } from "@/lib/dashboard-data";
+import { MASTER_FEATURED, NEURAL_CATALOG } from "@/lib/dashboard-data";
 import type { CourseItem } from "@/lib/dashboard-data";
+import { RecommenderEngine } from "@/lib/ml/recommender-engine";
+import NeuralPulse from "@/components/dashboard/neural-pulse";
+import VideoPlayerModal from "@/components/dashboard/video-player-modal";
+import RemedialRoadmap from "@/components/dashboard/remedial-roadmap";
+import NeuralActivityGraph, { GlobalLiveFeed, AIQuickStats } from "@/components/dashboard/premium-filler";
 
 const INITIAL_VISIBLE = 4;
 const LOAD_MORE_COUNT = 3;
@@ -37,38 +42,52 @@ function CourseCard({
   return (
     <motion.div
       layout
-      whileHover={{ scale: grid ? 1.02 : 1.04, zIndex: 30 }}
-      className={`relative ${grid ? "w-full" : "min-w-[300px] md:min-w-[310px] shrink-0"} aspect-video rounded-xl overflow-hidden cursor-pointer group bg-card border border-transparent hover:border-primary/30 transition-all duration-300`}
+      whileHover={{ scale: 1.02, y: -5 }}
+      className={`relative ${grid ? "w-full" : "min-w-[340px] md:min-w-[380px] shrink-0"} aspect-video rounded-2xl overflow-hidden cursor-pointer group bg-card border border-border/40 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/10`}
     >
-      <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
-        <h3 className="font-bold text-sm text-white mb-1 leading-snug">{item.title}</h3>
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-[#34d399] text-xs font-semibold">{item.match} match</span>
-          <span className="flex items-center gap-1 text-white/60 text-xs"><Clock size={11} />{item.duration}</span>
-        </div>
-        {item.tags && (
-          <div className="flex gap-1 mb-2 flex-wrap">
-            {item.tags.map((t) => (
-              <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/70">{t}</span>
-            ))}
+      <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+      
+      {/* Neural Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+      
+      <div className="absolute inset-0 p-6 flex flex-col justify-end transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="px-2.5 py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest">
+            {item.match} MATCH
           </div>
-        )}
-        <div className="flex items-center gap-2">
-          <button onClick={() => onPlay(item)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:scale-110 transition-transform">
-            <Play size={14} className="text-black ml-0.5" fill="currentColor" />
+          <div className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/70 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+            <Clock size={10} /> {item.duration}
+          </div>
+        </div>
+        
+        <h3 className="font-black text-xl text-white mb-2 leading-tight tracking-tight drop-shadow-lg">{item.title}</h3>
+        
+        <div className="flex gap-1.5 mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
+          {item.tags?.map((t) => (
+            <span key={t} className="text-[9px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/50 font-bold uppercase tracking-tighter">{t}</span>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 delay-150">
+          <button onClick={() => onPlay(item)} className="h-10 px-6 rounded-xl bg-white text-black font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-primary hover:text-white transition-colors shadow-lg">
+            <Play size={12} fill="currentColor" /> Play Module
           </button>
           <button
             onClick={() => onSave(item)}
-            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${isSaved ? "bg-[#34d399]/20 border-[#34d399]/40" : "bg-white/20 border-white/30 hover:bg-white/30"}`}
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${isSaved ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/20 text-white hover:bg-white/10"}`}
           >
-            <Plus size={14} className={isSaved ? "text-[#34d399] rotate-45" : "text-white"} />
+            <Plus size={16} className={isSaved ? "rotate-45" : ""} />
           </button>
         </div>
       </div>
+
       {item.progress !== undefined && (
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-white/20">
-          <div className="h-full" style={{ width: `${item.progress}%`, background: "linear-gradient(90deg,#7c3aed,#a78bfa)" }} />
+        <div className="absolute bottom-0 left-0 w-full h-1.5 bg-white/10">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${item.progress}%` }}
+            className="h-full bg-gradient-to-r from-primary to-blue-400" 
+          />
         </div>
       )}
     </motion.div>
@@ -77,7 +96,7 @@ function CourseCard({
 
 // ─── Course Row — horizontal scroll + load more + grid toggle ─────────────────
 function CourseRow({ row, onPlay, onSave, isSavedFn }: {
-  row: typeof COURSE_ROWS[0];
+  row: any;
   onPlay: (item: CourseItem) => void;
   onSave: (item: CourseItem) => void;
   isSavedFn: (id: string) => boolean;
@@ -89,72 +108,61 @@ function CourseRow({ row, onPlay, onSave, isSavedFn }: {
 
   const loadMore = async () => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 600));
     setVisible((v) => Math.min(v + LOAD_MORE_COUNT, row.items.length));
     setLoading(false);
-    // After loading, scroll right to show new cards
-    setTimeout(() => scrollRef.current?.scrollTo({ left: scrollRef.current.scrollWidth, behavior: "smooth" }), 100);
   };
 
   const canLoadMore = visible < row.items.length;
   const shownItems = row.items.slice(0, visible);
 
   return (
-    <div className="mb-12 px-8 md:px-12">
+    <div className="mb-20 px-8 md:px-12 relative">
       {/* Row header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-foreground tracking-tight">{row.title}</h2>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">{visible} of {row.items.length}</span>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase">{row.title}</h2>
+          <div className="h-1 w-12 bg-primary rounded-full mt-1" />
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-card border border-border px-3 py-1 rounded-full">
+            {visible} <span className="opacity-40">/</span> {row.items.length} Modules
+          </div>
           <button
             onClick={() => setGridView(!gridView)}
-            className={`p-1.5 rounded-lg border transition-all ${gridView ? "border-primary/40 text-primary bg-primary/10" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/30"}`}
-            title={gridView ? "Scroll view" : "Grid view"}
+            className={`p-2 rounded-xl border transition-all ${gridView ? "border-primary text-primary bg-primary/10 shadow-lg shadow-primary/10" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
           >
-            {gridView ? <AlignJustify size={14} /> : <LayoutGrid size={14} />}
+            {gridView ? <AlignJustify size={16} /> : <LayoutGrid size={16} />}
           </button>
         </div>
       </div>
 
       {/* Grid view */}
       {gridView ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence>
-            {shownItems.map((item, j) => (
+            {shownItems.map((item: any, j: number) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: j * 0.04 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: j * 0.05 }}
               >
                 <CourseCard item={item} onPlay={onPlay} onSave={onSave} isSaved={isSavedFn(item.id)} grid />
               </motion.div>
             ))}
           </AnimatePresence>
-          {canLoadMore && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={loadMore}
-              disabled={loading}
-              className="aspect-video rounded-xl border border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all group"
-            >
-              {loading
-                ? <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                : <><ChevronDown size={18} className="group-hover:scale-110 transition-transform" /><span className="text-xs font-semibold">Load More</span></>}
-            </motion.button>
-          )}
         </div>
       ) : (
         /* Horizontal scroll view */
-        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x scroll-smooth">
+        <div ref={scrollRef} className="flex gap-8 overflow-x-auto pb-10 scrollbar-hide snap-x scroll-smooth">
           <AnimatePresence>
-            {shownItems.map((item, j) => (
+            {shownItems.map((item: any, j: number) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, x: 30 }}
+                initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.25, delay: j >= INITIAL_VISIBLE ? (j % LOAD_MORE_COUNT) * 0.06 : 0 }}
+                transition={{ duration: 0.5, delay: j * 0.05 }}
                 className="snap-start"
               >
                 <CourseCard item={item} onPlay={onPlay} onSave={onSave} isSaved={isSavedFn(item.id)} />
@@ -167,11 +175,11 @@ function CourseRow({ row, onPlay, onSave, isSavedFn }: {
               animate={{ opacity: 1 }}
               onClick={loadMore}
               disabled={loading}
-              className="min-w-[120px] shrink-0 aspect-video rounded-xl border border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all group snap-start"
+              className="min-w-[180px] shrink-0 aspect-video rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group snap-start"
             >
               {loading
-                ? <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                : <><ChevronDown size={18} className="group-hover:scale-110 transition-transform" /><span className="text-xs font-semibold">Load More</span></>}
+                ? <div className="w-6 h-6 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+                : <><div className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center group-hover:scale-110 transition-transform"><ChevronRight size={24} /></div><span className="text-[10px] font-black uppercase tracking-widest">Load More</span></>}
             </motion.button>
           )}
         </div>
@@ -181,16 +189,87 @@ function CourseRow({ row, onPlay, onSave, isSavedFn }: {
 }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-type View = "home" | "mylist" | "analytics" | "profile";
+type View = "home" | "mylist" | "analytics" | "profile" | "search";
+
+import TelemetryTracker from "@/components/dashboard/telemetry-tracker";
+import { useAutoPredict } from "@/lib/ml/use-auto-predict";
+
+import { useEffect } from "react";
+import { supabase, getProfile, signOut } from "@/lib/supabase";
 
 export default function StudentDashboard() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isSplitView, setIsSplitView] = useState(false);
-  const [activeView, setActiveView] = useState<View>("home");
-  const { profile, saveCourse, removeCourse, isSaved } = useUserStore();
+  const { profile, setProfile, saveCourse, removeCourse, isSaved, activeView, setActiveView, setCommandPaletteOpen } = useUserStore();
   const { addToast } = useToast();
 
-  const handlePlay = (item: CourseItem) => addToast(`▶ Starting "${item.title}"...`, "success");
+  const [liveCourses, setLiveCourses] = useState<CourseItem[]>([]);
+  const [activeVideoUrl, setActiveVideoUrl] = useState("");
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [activeVideoTitle, setActiveVideoTitle] = useState("");
+
+  const handlePlay = (course: any) => {
+    setActiveVideoTitle(course.title);
+    setActiveVideoUrl(course.video_url || "");
+    setIsPlayerOpen(true);
+    addToast(`▶ Streaming: ${course.title}`, "success");
+  };
+
+  // --- BRAIN SYNC: PERSISTENCE LAYER ---
+  useEffect(() => {
+    const syncNeuralProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // 1. Fetch Profile
+        const { data: dbProfile } = await getProfile(session.user.id);
+        
+        // Use registration name if DB name is missing
+        const registrationName = session.user.user_metadata?.full_name || "Neural Explorer";
+        
+        if (dbProfile) {
+          console.log("[BRAIN] Synchronizing neural state with cloud...");
+          // If DB has a generic name but session has a real one, prioritize session
+          const finalProfile = {
+            ...dbProfile,
+            name: dbProfile.name || registrationName
+          };
+          setProfile(finalProfile);
+          
+          // Silently update DB if name was missing
+          if (!dbProfile.name) {
+             await supabase.from('profiles').update({ name: registrationName }).eq('id', session.user.id);
+          }
+        } else {
+          // New profile setup if not exists
+          setProfile({ name: registrationName, role: "Student" });
+        }
+        
+        // 2. Fetch Performance History (Real Logs)
+        const { data: history } = await supabase
+          .from('performance_history')
+          .select('*')
+          .order('date', { ascending: false });
+        
+        if (history) {
+          // Update global store with live history
+          useUserStore.setState({ 
+            performanceHistory: history.map(h => ({
+              date: h.date,
+              marks: h.marks,
+              cognitiveLoad: h.cognitive_load_at_time || 0.5,
+              focusAreas: h.focus_areas || [],
+              subject: h.subject || "General Neural Stream"
+            }))
+          });
+        }
+
+        // 3. Fetch Live Courses from Tutors
+        const live = await RecommenderEngine.fetchLiveCourses();
+        setLiveCourses(live);
+      }
+    };
+    syncNeuralProfile();
+  }, [setProfile]);
 
   const handleSave = (item: CourseItem) => {
     if (isSaved(item.id)) {
@@ -203,14 +282,23 @@ export default function StudentDashboard() {
   };
 
   const NAV_ITEMS: { icon: React.ReactNode; label: string; view: View }[] = [
+    { icon: <BarChart2 size={22} />, label: "Analytics", view: "analytics" },
     { icon: <Home size={22} />, label: "Home", view: "home" },
     { icon: <List size={22} />, label: "My List", view: "mylist" },
-    { icon: <BarChart2 size={22} />, label: "Analytics", view: "analytics" },
     { icon: <User size={22} />, label: "Profile", view: "profile" },
   ];
 
+  const analysis = useAutoPredict();
+
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-[#a78bfa] selection:text-white transition-colors duration-300 flex">
+    <div className="min-h-screen bg-background text-foreground font-sans flex transition-colors duration-300 selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
+      <TelemetryTracker />
+
+      {/* --- PREMIUM BACKGROUND DEPTH --- */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[20%] right-[-5%] w-[30%] h-[50%] bg-blue-500/5 blur-[100px] rounded-full" />
+      </div>
 
       <CommandPalette onToast={(msg) => addToast(msg, "info")} />
 
@@ -257,7 +345,13 @@ export default function StudentDashboard() {
               return (
                 <button
                   key={item.view}
-                  onClick={() => setActiveView(item.view)}
+                  onClick={() => {
+                    if (item.view === 'search') {
+                      setCommandPaletteOpen(true);
+                    } else {
+                      setActiveView(item.view);
+                    }
+                  }}
                   className={`flex items-center gap-4 px-2 py-3 rounded-xl transition-all group text-left w-full ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
                 >
                   <div className="min-w-[32px] flex items-center justify-center transition-transform group-hover:scale-110">{item.icon}</div>
@@ -315,6 +409,17 @@ export default function StudentDashboard() {
               )}
             </AnimatePresence>
           </div>
+          <button 
+            onClick={() => signOut()}
+            className="flex items-center gap-4 px-2 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all group"
+          >
+            <div className="min-w-[32px] flex items-center justify-center transition-transform group-hover:scale-110"><LogOut size={22} /></div>
+            <AnimatePresence>
+              {sidebarExpanded && (
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-medium whitespace-nowrap">Sign Out</motion.span>
+              )}
+            </AnimatePresence>
+          </button>
           <button
             onClick={() => setActiveView("profile")}
             className="pt-3 border-t border-border flex items-center gap-4 px-2 group w-full text-left"
@@ -343,7 +448,7 @@ export default function StudentDashboard() {
               <div className="relative h-[85vh] w-full flex items-center px-12 md:px-24 overflow-hidden">
                 <NeuralHeroCanvas />
                 <div className="absolute inset-0 z-0">
-                  <img src={FEATURED_COURSE.img} alt="Hero" className="w-full h-full object-cover opacity-60" />
+                  <img src={MASTER_FEATURED.img} alt="Hero" className="w-full h-full object-cover opacity-60" />
                   <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                 </div>
@@ -351,40 +456,46 @@ export default function StudentDashboard() {
                   <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest mb-4 text-[#a78bfa]">
                     <Brain size={16} /> Neural Match Series
                   </div>
-                  <h1 className="text-5xl md:text-7xl font-black mb-4 leading-[1.1] tracking-[-0.02em]">{FEATURED_COURSE.title}</h1>
+                  <h1 className="text-5xl md:text-7xl font-black mb-4 leading-[1.1] tracking-[-0.02em]">{MASTER_FEATURED.title}</h1>
                   <div className="flex items-center gap-4 text-sm font-semibold mb-6">
-                    <span className="text-[#34d399]">{FEATURED_COURSE.match}</span>
-                    <span className="text-muted-foreground">{FEATURED_COURSE.year}</span>
+                    <span className="text-[#34d399]">{MASTER_FEATURED.match}</span>
+                    <span className="text-muted-foreground">{MASTER_FEATURED.year}</span>
                     <div className="flex gap-2">
-                      {FEATURED_COURSE.tags.map((tag) => (
+                      {MASTER_FEATURED.tags.map((tag) => (
                         <span key={tag} className="border border-border px-2 py-0.5 rounded text-muted-foreground text-xs">{tag}</span>
                       ))}
                     </div>
                   </div>
-                  <p className="text-lg text-foreground/80 mb-8 max-w-xl leading-relaxed">{FEATURED_COURSE.description}</p>
+                  <p className="text-lg text-foreground/80 mb-8 max-w-xl leading-relaxed">{MASTER_FEATURED.description}</p>
                   <div className="flex items-center gap-4">
-                    <button onClick={() => addToast(`▶ Starting "${FEATURED_COURSE.title}"...`, "success")} className="flex items-center gap-2 bg-foreground text-background px-8 py-3 rounded-md font-bold text-lg hover:opacity-90 transition-opacity">
+                    <button onClick={() => handlePlay(MASTER_FEATURED)} className="flex items-center gap-2 bg-foreground text-background px-8 py-3 rounded-md font-bold text-lg hover:opacity-90 transition-opacity">
                       <Play size={20} fill="currentColor" /> Play
                     </button>
                     <button
-                      onClick={() => handleSave({ id: FEATURED_COURSE.id, title: FEATURED_COURSE.title, img: FEATURED_COURSE.img, match: FEATURED_COURSE.match, duration: "9h total", tags: FEATURED_COURSE.tags })}
+                      onClick={() => handleSave({ id: MASTER_FEATURED.id, title: MASTER_FEATURED.title, img: MASTER_FEATURED.img, match: MASTER_FEATURED.match, duration: "9h total", tags: MASTER_FEATURED.tags })}
                       className="flex items-center gap-2 bg-foreground/10 backdrop-blur-md text-foreground px-8 py-3 rounded-md font-bold text-lg hover:bg-foreground/20 transition-colors"
                     >
-                      <Info size={20} /> {isSaved(FEATURED_COURSE.id) ? "Saved ✓" : "Add to List"}
+                      <Info size={20} /> {isSaved(MASTER_FEATURED.id) ? "Saved ✓" : "Add to List"}
                     </button>
                   </div>
                 </motion.div>
               </div>
 
+              {/* LIVE GLOBAL FEED */}
+              <GlobalLiveFeed />
+
+              {/* Dynamic Roadmap (For Struggling Students) */}
+              {analysis?.risk.riskLevel === "Critical" && <RemedialRoadmap />}
+
+              {/* Recommendations (Dynamic AI First) */}
+              <RecommendationsSection />
+
               {/* Course Rows */}
               <div className="relative z-20 pt-8">
-                {COURSE_ROWS.map((row) => (
+                {RecommenderEngine.getDashboardRows(profile, liveCourses).map((row) => (
                   <CourseRow key={row.id} row={row} onPlay={handlePlay} onSave={handleSave} isSavedFn={isSaved} />
                 ))}
               </div>
-
-              {/* Recommendations */}
-              <RecommendationsSection />
             </motion.div>
           )}
 
@@ -422,12 +533,20 @@ export default function StudentDashboard() {
               <h3 className="text-lg font-bold">Command Center</h3>
               <button onClick={() => setIsSplitView(false)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
-            <div className="space-y-5">
+            
+            <NeuralPulse />
+
+            <div className="mt-6 space-y-6">
+              <NeuralActivityGraph />
+              <AIQuickStats />
+              
               <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
                 <h4 className="text-xs font-bold text-primary mb-2 uppercase tracking-wider">AI Insight</h4>
-                <p className="text-sm text-muted-foreground italic leading-relaxed">"You are 98% matched with Quantum Mechanics. Focus on Wave Function Collapse to reach 100%."</p>
+                <p className="text-sm text-muted-foreground italic leading-relaxed">"Based on your click patterns, you are processing logic 20% faster than your baseline."</p>
               </div>
-              <div className="space-y-3">
+            </div>
+
+            <div className="space-y-3 mt-6">
                 <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Recent Activity</h4>
                 {[
                   { label: "Completed Quiz #3 — 94%", time: "2h ago" },
@@ -443,7 +562,7 @@ export default function StudentDashboard() {
                   </div>
                 ))}
               </div>
-              <div className="p-4 rounded-xl bg-card border border-border">
+              <div className="p-4 rounded-xl bg-card border border-border mt-6">
                 <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60 mb-3">Quick Actions</h4>
                 <div className="flex flex-col gap-1">
                   {[
@@ -458,10 +577,15 @@ export default function StudentDashboard() {
                   ))}
                 </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <VideoPlayerModal 
+          isOpen={isPlayerOpen} 
+          onClose={() => setIsPlayerOpen(false)} 
+          videoTitle={activeVideoTitle} 
+          videoUrl={activeVideoUrl}
+        />
+      </div>
   );
 }
